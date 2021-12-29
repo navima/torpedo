@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "torpedo", "torpedo\torpedo.csproj", "{5CB1272D-0160-45E5-9739-10E121E63F65}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "torpedo", "torpedo\torpedo.csproj", "{5CB1272D-0160-45E5-9739-10E121E63F65}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "torpedoTesterConsoleApp", "torpedoTesterConsoleApp\torpedoTesterConsoleApp.csproj", "{5B879CA9-F4B0-4169-BCC0-393263038AF1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{5CB1272D-0160-45E5-9739-10E121E63F65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CB1272D-0160-45E5-9739-10E121E63F65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CB1272D-0160-45E5-9739-10E121E63F65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B879CA9-F4B0-4169-BCC0-393263038AF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B879CA9-F4B0-4169-BCC0-393263038AF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B879CA9-F4B0-4169-BCC0-393263038AF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B879CA9-F4B0-4169-BCC0-393263038AF1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
