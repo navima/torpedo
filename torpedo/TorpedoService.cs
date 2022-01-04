@@ -27,31 +27,18 @@ namespace NationalInstruments
         private readonly Dictionary<Player, Dictionary<Position, EHitResult>> _hitResults = new();
         private readonly DataStore dataStore;
         private readonly (int, int) _tableSize;
+        public event EventHandler<StateChangedEventArgs>? GameStateChanged;
 
-
+        #region Constructors
         public TorpedoService(DataStore dataStore, (int, int) tableSize)
         {
             this.dataStore = dataStore;
             this._tableSize = tableSize;
         }
-        public event EventHandler<StateChangedEventArgs>? GameStateChanged;
-        public IEnumerable<Player> Players { get => _players; }
-        public void AddPlayer(Player player) => _players.Add(player);
-        public void FinishAddingPlayers()
-        {
-            if (GameState == EGameState.AddingPlayers)
-            {
-                GameState = EGameState.PlacingShips;
-                foreach (var player in _players)
-                {
-                    // TODO
-                    _unPlacedShips.Add(player, (new List<Ship>(_startingShips.Keys)).ConvertAll(x => new Ship(x)));
-                    _placedShips.Add(player, new Dictionary<Position, Ship>());
-                    _hitResults.Add(player, new Dictionary<Position, EHitResult>());
-                }
-                IncrementPlayer();
-            }
-        }
+        #endregion
+
+        #region Properties
+        public IEnumerable<Player> Players => _players;
         public EGameState GameState
         {
             get => _gameState;
@@ -62,11 +49,46 @@ namespace NationalInstruments
                 GameStateChanged?.Invoke(this, new StateChangedEventArgs(oldGameState, value));
             }
         }
+        public IDictionary<Ship, int> StartingShips => _startingShips;
+        public Player CurrentPlayer { get; private set; }
+        public (int, int) TableSize => _tableSize;
+
+        #endregion
+
+        private void EnsureState(EGameState state)
+        {
+            if (_gameState != state)
+            {
+                throw new IllegalStateException($"State should be {state.ToString()}");
+            }
+        }
+
+        public void AddPlayer(Player player)
+        {
+            EnsureState(EGameState.AddingPlayers);
+            _players.Add(player);
+        }
+        public void FinishAddingPlayers()
+        {
+            EnsureState(EGameState.AddingPlayers);
+            foreach (var player in _players)
+            {
+                // TODO
+                _unPlacedShips.Add(player, (new List<Ship>(_startingShips.Keys)).ConvertAll(x => new Ship(x)));
+                _placedShips.Add(player, new Dictionary<Position, Ship>());
+                _hitResults.Add(player, new Dictionary<Position, EHitResult>());
+            }
+            IncrementPlayer();
+            GameState = EGameState.PlacingShips;
+        }
+        [Pure]
         public IEnumerable<Ship> ShipsToPlace(Player player) => _unPlacedShips[player];
+        [Pure]
         public IDictionary<Position, Ship> PlacedShips(Player player) => _placedShips[player];
-        public IDictionary<Ship, int> StartingShips { get => _startingShips; }
+        [Pure]
         public bool CanPlaceShip(Player player, Ship ship, Position position)
         {
+            EnsureState(EGameState.PlacingShips);
             var expanded = ship.ExpandParts(position);
             return CurrentPlayer == player
                 && ShipsToPlace(player).Contains(ship)
@@ -77,6 +99,7 @@ namespace NationalInstruments
         }
         public bool TryPlaceShip(Player player, Ship ship, Position position)
         {
+            EnsureState(EGameState.PlacingShips);
             if (CanPlaceShip(player, ship, position))
             {
                 _unPlacedShips[player].Remove(ship);
@@ -90,6 +113,7 @@ namespace NationalInstruments
         }
         public void FinishPlacingShips(Player player)
         {
+            EnsureState(EGameState.PlacingShips);
             if (CurrentPlayer == player)
             {
                 var wraparound = IncrementPlayer();
@@ -101,6 +125,7 @@ namespace NationalInstruments
         }
         public EHitResult TryHit(Player player, Position position)
         {
+            EnsureState(EGameState.SinkingShips);
             if (CurrentPlayer != player)
             {
                 throw new InvalidOperationException();
@@ -143,9 +168,6 @@ namespace NationalInstruments
             IncrementPlayer();
             return result;
         }
-        public Player CurrentPlayer { get; private set; }
-
-        public (int, int) TableSize => _tableSize;
 
         /// <summary>
         /// Ends the current player's turn.
@@ -165,9 +187,10 @@ namespace NationalInstruments
                 return false;
             }
         }
+        [Pure]
         public ShipPart?[,] GetBoard(Player player)
         {
-            var board = new ShipPart[TableSize.Item1, TableSize.Item2];
+            var board = GetBlankBoard<ShipPart?>();
             var ships = PlacedShips(player);
             foreach (var (shipPosition, ship) in ships)
             {
@@ -178,9 +201,10 @@ namespace NationalInstruments
             }
             return board;
         }
+        [Pure]
         public EHitResult?[,] GetHitBoard(Player player)
         {
-            var board = new EHitResult?[TableSize.Item1, TableSize.Item2];
+            EHitResult?[,] board = GetBlankBoard<EHitResult?>();
             var hits = _hitResults[player];
             foreach (var (position, result) in hits)
             {
@@ -188,8 +212,19 @@ namespace NationalInstruments
             }
             return board;
         }
-        public ShipPart?[,] GetBlankBoard() => new ShipPart[TableSize.Item1, TableSize.Item2];
+        [Pure]
+        public T[,] GetBlankBoard<T>() => new T[TableSize.Item1, TableSize.Item2];
+    }
 
+    [Serializable]
+    public class IllegalStateException : Exception
+    {
+        public IllegalStateException() { }
+        public IllegalStateException(string message) : base(message) { }
+        public IllegalStateException(string message, Exception inner) : base(message, inner) { }
+        protected IllegalStateException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
     public class StateChangedEventArgs : EventArgs
