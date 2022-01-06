@@ -12,17 +12,39 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using torpedo;
 
 namespace NationalInstruments
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void GameClicked1(object sender, RoutedEventArgs e)
+        {
+            var w = new NameGetWindow();
+            if(w.ShowDialog() == false)
+            {
+                Main.Content = new GridPage(w.playername,"AI");
+            }
+        }
+
+        private void GameClicked2(object sender, RoutedEventArgs e)
+        {
+            var w = new NameGetWindow2();
+            if (w.ShowDialog() == false)
+            {
+                Main.Content = new GridPage(w.playername1,w.playername2);
+            }
+        }
+
+        private void ScoreClicked(object sender, RoutedEventArgs e)
+        {
+// Main.Content = new scorepage();
         }
     }
 }
