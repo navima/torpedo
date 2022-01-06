@@ -1,4 +1,5 @@
-﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
+#pragma warning disable SA1000 // Keywords should be spaced correctly
+#pragma warning disable NI1704 // Identifiers should be spelled correctly
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,6 @@ namespace NationalInstruments
             { new Ship(2), 1 },
             { new Ship(3), 1 },
             { new Ship(4), 1 },
-            //{ new Ship(5), 1 },
         };
         private readonly Dictionary<Player, List<Ship>> _unPlacedShips = new();
         private readonly Dictionary<Player, Dictionary<Position, Ship>> _placedShips = new();
@@ -50,7 +50,7 @@ namespace NationalInstruments
             }
         }
         public IDictionary<Ship, int> StartingShips => _startingShips;
-        public Player CurrentPlayer { get; private set; }
+        public Player? CurrentPlayer { get; private set; }
         public (int, int) TableSize => _tableSize;
 
         #endregion
@@ -123,18 +123,16 @@ namespace NationalInstruments
                 }
             }
         }
-        public EHitResult TryHit(Player player, Position position)
+        public bool TryHit(Player player, Position position, out EHitResult result)
         {
             EnsureState(EGameState.SinkingShips);
             if (CurrentPlayer != player)
             {
                 throw new InvalidOperationException();
             }
-            EHitResult result = EHitResult.Miss;
-            var enemies = Players.Where(x => x != player);
-            foreach (var enemy in enemies)
+
+            Func<IDictionary<Position, Ship>, Position, ShipPart?> findHitPart = (ships, position) =>
             {
-                var ships = PlacedShips(enemy);
                 foreach (var (shipPos, ship) in ships)
                 {
                     var shipParts = ship.ExpandParts(shipPos);
@@ -142,31 +140,40 @@ namespace NationalInstruments
 
                     if (hitPositionShipPart.Value != null)
                     {
-                        var (hitPos, shipPart) = hitPositionShipPart;
-                        shipPart.Hit();
-                        if (ship.Dead)
-                        {
-                            result = EHitResult.Sink;
-                            Array.ForEach(shipParts.ToArray(), part =>
-                            {
-                                var success = _hitResults[player].TryAdd(part.Key, result);
-                                if (!success)
-                                {
-                                    _hitResults[player][part.Key] = result;
-                                }
-                            });
-                        }
-                        else if (result != EHitResult.Sink)
-                        {
-                            result = EHitResult.Hit;
-                            _hitResults[player].Add(position, result);
-                        }
+                        return hitPositionShipPart.Value;
+                    }
+                }
+                return null;
+            };
+
+            EHitResult resultLocal = EHitResult.Miss;
+            var enemies = Players.Where(x => x != player);
+            foreach (var enemy in enemies)
+            {
+                var ships = PlacedShips(enemy);
+                var hitPart = findHitPart(ships, position);
+
+                if (hitPart != null)
+                {
+                    hitPart.Hit();
+                    if (hitPart.Parent.Dead)
+                    {
+                        resultLocal.Escalate(EHitResult.Sink);
+                    }
+                    else
+                    {
+                        resultLocal.Escalate(EHitResult.Hit);
                     }
                 }
             }
-            _hitResults[player].TryAdd(position, result);
+            _hitResults[player].TryAdd(position, resultLocal);
+            if (IsGameOver())
+            {
+                GameState = EGameState.GameOver;
+            }
             IncrementPlayer();
-            return result;
+            result = resultLocal;
+            return true;
         }
 
         /// <summary>
@@ -175,7 +182,11 @@ namespace NationalInstruments
         /// <returns>bool indicating if we've wrapped around to the first player</returns>
         private bool IncrementPlayer()
         {
-            var index = _players.IndexOf(CurrentPlayer);
+            if (_players.Count == 0)
+            {
+                return false;
+            }
+            var index = CurrentPlayer is not null ? _players.IndexOf(CurrentPlayer) : -1;
             if (index == _players.Count - 1 || index == -1)
             {
                 CurrentPlayer = _players[0];
@@ -187,6 +198,10 @@ namespace NationalInstruments
                 return false;
             }
         }
+        [Pure]
+        private bool IsPlayerDead(Player player) => PlacedShips(player).Values.All(x => x.Dead);
+        [Pure]
+        private bool IsGameOver() => _players.Where(IsPlayerDead).Count() == _players.Count - 1;
         [Pure]
         public ShipPart?[,] GetBoard(Player player)
         {
@@ -234,11 +249,24 @@ namespace NationalInstruments
 
         public StateChangedEventArgs(EGameState oldGameState, EGameState newGameState) => (this.OldGameState, this.NewGameState) = (oldGameState, newGameState);
 
-        public override string? ToString() => OldGameState.ToString() + " => " + NewGameState.ToString();
+        public override string? ToString() => $"{OldGameState} => {NewGameState}";
     }
     public enum EHitResult
     {
-        Miss, Hit, Sink
+        None = 0,
+        Miss = 1,
+        Hit = 2,
+        Sink = 3,
+    }
+    public static class EHitResultExtensions
+    {
+        public static void Escalate(this EHitResult self, EHitResult other)
+        {
+            if ((short)other > (short)self)
+            {
+                self = other;
+            }
+        }
     }
 
     public readonly struct Position
@@ -299,6 +327,7 @@ namespace NationalInstruments
                 _parts.Add(new ShipPart(this));
             }
         }
+        // Copy constructor
         public Ship(Ship other) : this(other.Size)
         {
         }
@@ -313,23 +342,15 @@ namespace NationalInstruments
                        position.X + i * (Orientation == EOrientation.Right ? 1 : Orientation == EOrientation.Left ? -1 : 0),
                        position.Y + i * (Orientation == EOrientation.Up ? -1 : Orientation == EOrientation.Down ? 1 : 0)),
                    _parts[i])));
-        public override string ToString()
-        {
-            return $"Ship[{Parts.Select(x => x.Alive ? "O" : "X").Aggregate((x, y) => x + y)}]";
-        }
+        public override string ToString() => $"Ship[{Parts.Select(x => x.Alive ? "O" : "X").Aggregate((x, y) => x + y)}]";
     }
+
     public class ShipPart
     {
         public bool Alive { get; private set; } = true;
         public Ship Parent { get; init; }
-        public ShipPart(Ship parent)
-        {
-            Parent = parent;
-        }
-        public void Hit()
-        {
-            Alive = false;
-        }
+        public ShipPart(Ship parent) => Parent = parent;
+        public void Hit() => Alive = false;
     }
 
     public enum EOrientation

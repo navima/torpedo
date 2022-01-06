@@ -1,4 +1,4 @@
-﻿
+
 
 namespace NationalInstruments
 {
@@ -73,7 +73,8 @@ namespace NationalInstruments
                 var groups = matches[0].Groups;
                 var inRow = ((short)groups[1].Value[0]) - (short)'a';
                 var inCol = int.Parse(groups[2].Value) - 1;
-                var res = _torpedoGameInstance.TryHit(player, new Position(inCol, inRow));
+                EHitResult res;
+                bool success = _torpedoGameInstance.TryHit(player, new Position(inCol, inRow), out res);
                 Console.WriteLine(res);
             };
             while (_torpedoGameInstance.GameState != EGameState.None)
@@ -110,7 +111,7 @@ namespace NationalInstruments
                 }
             }
         }
-
+#nullable enable
         private void TorpedoService_GameStateChanged(object? sender, StateChangedEventArgs e)
         {
             Console.WriteLine("STATE CHANGED: " + e);
