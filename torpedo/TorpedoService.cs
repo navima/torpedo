@@ -215,7 +215,7 @@ namespace NationalInstruments
             }
         }
         [Pure]
-        private bool IsPlayerDead(Player player) => PlacedShips(player).Values.All(x => x.Dead);
+        public bool IsPlayerDead(Player player) => PlacedShips(player).Values.All(x => x.Dead);
         [Pure]
         private bool IsGameOver() => _players.Where(IsPlayerDead).Count() == _players.Count - 1;
         [Pure]
