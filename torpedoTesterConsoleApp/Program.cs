@@ -105,12 +105,19 @@ namespace NationalInstruments
                         }
                         break;
                     case EGameState.GameOver:
+                        {
+                            Console.WriteLine("Game Over!");
+                            Console.WriteLine("Results:");
+                            Array.ForEach(_torpedoGameInstance.Players.ToArray(), x => Console.WriteLine($"{x.ToString()}: " + (_torpedoGameInstance.IsPlayerDead(x) ? "Lose" : "Win")));
+                            Console.ReadLine();
+                        }
                         break;
                     default:
                         break;
                 }
             }
         }
+
 #nullable enable
         private void TorpedoService_GameStateChanged(object? sender, StateChangedEventArgs e)
         {
