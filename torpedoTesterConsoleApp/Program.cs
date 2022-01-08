@@ -63,18 +63,28 @@ namespace NationalInstruments
                 printBoard(boardToString(_torpedoGameInstance.GetBoard(player)));
                 Console.WriteLine("Enemy Board:");
                 printBoard(boardToString(_torpedoGameInstance.GetHitBoard(player)));
-                Console.WriteLine("Please select where to hit ([A-Z][0-9])");
-                var matches = rxPosition.Matches(Console.ReadLine().ToLower());
-                if(matches.Count < 1)
+
+                bool success = false;
+                EHitResult res = EHitResult.None;
+                while (!success)
                 {
-                    Console.WriteLine("Bad format!");
-                    return;
+                    Console.WriteLine("Please select where to hit ([A-Z][0-9])");
+                    var matches = rxPosition.Matches(Console.ReadLine().ToLower());
+                    if (matches.Count < 1)
+                    {
+                        Console.WriteLine("Bad format!");
+                        continue;
+                    }
+                    var groups = matches[0].Groups;
+                    var inRow = ((short)groups[1].Value[0]) - (short)'a';
+                    var inCol = int.Parse(groups[2].Value) - 1;
+                    var position = new Position(inCol, inRow);
+                    success = _torpedoGameInstance.TryHit(player, position, out res);
+                    if (!success)
+                    {
+                        Console.WriteLine($"Invalid position! {position}");
+                    }
                 }
-                var groups = matches[0].Groups;
-                var inRow = ((short)groups[1].Value[0]) - (short)'a';
-                var inCol = int.Parse(groups[2].Value) - 1;
-                EHitResult res;
-                bool success = _torpedoGameInstance.TryHit(player, new Position(inCol, inRow), out res);
                 Console.WriteLine(res);
             };
             while (_torpedoGameInstance.GameState != EGameState.None)
@@ -82,12 +92,14 @@ namespace NationalInstruments
                 switch (_torpedoGameInstance.GameState)
                 {
                     case EGameState.AddingPlayers:
-                        Console.WriteLine("Adding alice");
-                        _torpedoGameInstance.AddPlayer(new Player("alice"));
-                        Console.WriteLine("Ading bob");
-                        _torpedoGameInstance.AddPlayer(new Player("bob"));
-                        Console.WriteLine("Calling finish adding players");
-                        _torpedoGameInstance.FinishAddingPlayers();
+                        {
+                            Console.WriteLine("Adding alice");
+                            _torpedoGameInstance.AddPlayer(new Player("alice"));
+                            Console.WriteLine("Ading bob");
+                            _torpedoGameInstance.AddPlayer(new Player("bob"));
+                            Console.WriteLine("Calling finish adding players");
+                            _torpedoGameInstance.FinishAddingPlayers();
+                        }
                         break;
                     case EGameState.PlacingShips:
                         {
