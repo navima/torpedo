@@ -1,5 +1,6 @@
 ﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
+#nullable enable
 
 using System;
 using System.Collections.Generic;

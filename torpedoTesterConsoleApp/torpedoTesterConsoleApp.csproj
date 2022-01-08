@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\torpedo\torpedo.csproj" />
+    <ProjectReference Include="..\TorpedoService\TorpedoService.csproj" />
   </ItemGroup>
 
 </Project>

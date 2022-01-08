@@ -1,4 +1,6 @@
-﻿namespace NationalInstruments
+﻿#nullable enable
+
+namespace NationalInstruments
 {
     public class Player
     {
