@@ -12,16 +12,28 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using torpedo;
+using System.Diagnostics;
 
 namespace NationalInstruments
 {
 
     public partial class MainWindow : Window
     {
+
+        private char OpenedPage = 'N';
+        private GridPage page = null;
+
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void WindowKeyPressed(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.C && OpenedPage == 'O')
+            {
+                page.cheatMode();
+            }
         }
 
         private void GameClicked1(object sender, RoutedEventArgs e)
@@ -29,7 +41,9 @@ namespace NationalInstruments
             var w = new NameGetWindow();
             if(w.ShowDialog() == false)
             {
-                Main.Content = new GridPage(w.playername,"AI");
+                page = new GridPage(w.playername, "AI");
+                Main.Content = page;
+                OpenedPage = 'O';
             }
         }
 
@@ -39,12 +53,18 @@ namespace NationalInstruments
             if (w.ShowDialog() == false)
             {
                 Main.Content = new GridPage(w.playername1,w.playername2);
+                OpenedPage = 'T';
             }
         }
 
         private void ScoreClicked(object sender, RoutedEventArgs e)
         {
-// Main.Content = new scorepage();
+            // Main.Content = new scorepage();
+            OpenedPage = 'S';
+        }
+        private void CloseApplication(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
         }
     }
 }

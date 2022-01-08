@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NationalInstruments"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="MainWindow" Height="460" Width="800"
+        KeyDown="WindowKeyPressed" ResizeMode="NoResize">
+    <Grid Height="440">
         <Button x:Name="one_player_button" Content="One player mode" VerticalAlignment="Top" HorizontalAlignment="Left" Click="GameClicked1"/>
         <Button x:Name="two_player_button" Content="Two player mode" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="96,0,0,0" Click="GameClicked2"/>
         <Button x:Name="score_button" Content="High score" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="191,0,0,0" Click="ScoreClicked"/>
-        <Frame x:Name="Main" HorizontalAlignment="Center" Width="800" Margin="0,21,0,0" Height="414" NavigationUIVisibility="Hidden"/>
-
+        <Frame x:Name="Main" HorizontalAlignment="Center" Width="800" NavigationUIVisibility="Hidden" Background="Gray" Margin="0,20,0,0" Height="420"/>
+        <Button Content="Quit" HorizontalAlignment="Right" VerticalAlignment="Top" Width="33" Click="CloseApplication"/>
     </Grid>
 </Window>

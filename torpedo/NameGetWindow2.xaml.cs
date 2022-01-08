@@ -11,8 +11,11 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Text.RegularExpressions;
+using System.ComponentModel;
 
-namespace torpedo
+
+namespace NationalInstruments
 {
     /// <summary>
     /// Interaction logic for NameGetWindow2.xaml
@@ -26,15 +29,47 @@ namespace torpedo
         {
             InitializeComponent();
         }
+        public bool checkName(string name)
+        {
+            var reg = new Regex("^[a-zA-Z0-9]*$");
+            if (!(reg.IsMatch(name)))
+            {
+                System.Windows.MessageBox.Show("Name can only contain letters and numbers");
+            }
+            else
+            {
+                if (name.Length < 3 || name.Length > 9)
+                {
+                    System.Windows.MessageBox.Show("Name must be between 3 and 9 characters");
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         private void SubmitClicked(object sender, RoutedEventArgs e)
         {
-            playername1 = InputBox.Text.ToString();
-            playername2 = InputBox2.Text.ToString();
-            this.Close();
+
+            if(checkName(InputBox.Text) && checkName(InputBox2.Text))
+            {
+                playername1 = InputBox.Text.ToString();
+                playername2 = InputBox2.Text.ToString();
+                this.Close();
+            }
         }
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
 
+        }
+
+        private void closingEvent(object sender, CancelEventArgs e)
+        {
+            if (playername1 == "" || playername2 == "")
+            {
+                e.Cancel = true;
+            }
         }
     }
 }
