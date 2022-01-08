@@ -1,4 +1,4 @@
-#pragma warning disable SA1000 // Keywords should be spaced correctly
+﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
 
 using System;
@@ -174,11 +174,11 @@ namespace NationalInstruments
                     hitPart.Hit();
                     if (hitPart.Parent.Dead)
                     {
-                        resultLocal.Escalate(EHitResult.Sink);
+                        resultLocal = resultLocal.Escalate(EHitResult.Sink);
                     }
                     else
                     {
-                        resultLocal.Escalate(EHitResult.Hit);
+                        resultLocal = resultLocal.Escalate(EHitResult.Hit);
                     }
                 }
             }
@@ -276,12 +276,13 @@ namespace NationalInstruments
     }
     public static class EHitResultExtensions
     {
-        public static void Escalate(this EHitResult self, EHitResult other)
+        public static EHitResult Escalate(this EHitResult self, EHitResult target)
         {
-            if ((short)other > (short)self)
+            if ((short)target > (short)self)
             {
-                self = other;
+                return target;
             }
+            return self;
         }
     }
 
