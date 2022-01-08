@@ -52,6 +52,7 @@ namespace NationalInstruments
         public IDictionary<Ship, int> StartingShips => _startingShips;
         public Player? CurrentPlayer { get; private set; }
         public (int, int) TableSize => _tableSize;
+        public Bounds Bounds { get => new Bounds(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
 
         #endregion
 
@@ -90,12 +91,18 @@ namespace NationalInstruments
         {
             EnsureState(EGameState.PlacingShips);
             var expanded = ship.ExpandParts(position);
-            return CurrentPlayer == player
-                && ShipsToPlace(player).Contains(ship)
-                && !PlacedShips(player)
-                        .SelectMany(x => x.Value.ExpandParts(x.Key))
-                        .Where(x => expanded.Contains(x))
-                        .Any();
+
+            bool isCurrentPlayer = CurrentPlayer == player;
+            bool hasShip = ShipsToPlace(player).Contains(ship);
+            bool hasCollision = PlacedShips(player)
+                        .SelectMany(x => x.Value.ExpandParts(x.Key).Keys)
+                        .Any(x => expanded.Keys.Contains(x));
+            bool isInsideBounds = expanded.All(part => Bounds.Contains(part.Key));
+
+            return isCurrentPlayer
+                && hasShip
+                && !hasCollision
+                && isInsideBounds;
         }
         public bool TryPlaceShip(Player player, Ship ship, Position position)
         {
@@ -125,10 +132,19 @@ namespace NationalInstruments
         }
         public bool TryHit(Player player, Position position, out EHitResult result)
         {
+            result = EHitResult.None;
             EnsureState(EGameState.SinkingShips);
             if (CurrentPlayer != player)
             {
                 throw new InvalidOperationException();
+            }
+            if (!Bounds.Contains(position))
+            {
+                return false;
+            }
+            if (_hitResults[player].ContainsKey(position))
+            {
+                return false;
             }
 
             Func<IDictionary<Position, Ship>, Position, ShipPart?> findHitPart = (ships, position) =>
@@ -293,6 +309,8 @@ namespace NationalInstruments
             return HashCode.Combine(X, Y);
         }
 
+        public override string? ToString() => $"x: {X}, y: {Y}";
+
         public static bool operator ==(Position left, Position right)
         {
             return left.Equals(right);
@@ -302,6 +320,62 @@ namespace NationalInstruments
         {
             return !(left == right);
         }
+        #endregion
+    }
+
+    public readonly struct Bounds
+    {
+        public Bounds(int x, int y, int width, int height)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+        }
+        public int X { get; init; }
+        public int Y { get; init; }
+        public int Width { get; init; }
+        public int Height { get; init; }
+
+        public bool Contains(Position position)
+        {
+            return position.X >= X
+                && position.Y >= Y
+                && position.X <= Width
+                && position.Y <= Height;
+        }
+
+        #region Junk
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Bounds bounds
+                && X == bounds.X
+                && Y == bounds.Y
+                && Width == bounds.Width
+                && Height == bounds.Height;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y, Width, Height);
+        }
+
+        public override string? ToString()
+        {
+            return base.ToString();
+        }
+
+        public static bool operator ==(Bounds left, Bounds right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Bounds left, Bounds right)
+        {
+            return !(left == right);
+        }
+
         #endregion
     }
 
