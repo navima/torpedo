@@ -15,8 +15,8 @@ namespace NationalInstruments
             new Program().Run();
         }
 
-        Regex rxPositionOrientation = new Regex(@"([a-z]+)([0-9]+)(up|down|left|right)");
-        Regex rxPosition = new Regex(@"([a-z]+)([0-9]+)");
+        public readonly static Regex rxPositionOrientation = new Regex(@"([a-z]+)([0-9]+)(up|down|left|right)");
+        public readonly static Regex rxPosition = new Regex(@"([a-z]+)([0-9]+)");
 
         public void Run()
         {
@@ -28,33 +28,28 @@ namespace NationalInstruments
             Console.WriteLine("Initialized service");
             Action<Player> RequestPlayerPlaceShips = (player) =>
             {
-                Console.WriteLine("Placing Ships.");
-                Console.WriteLine("Available ships:");
-                _torpedoGameInstance.ShipsToPlace(player).ToList().ForEach(ship => Console.WriteLine(ship));
-                var first = true;
                 while (_torpedoGameInstance.ShipsToPlace(player).Count() > 0)
                 {
-                    if (!first) Console.SetCursorPosition(0, Console.CursorTop - _torpedoGameInstance.TableSize.Item2 - 4);
-                    first = false;
+                    Console.WriteLine("Placing Ships.");
+                    Console.WriteLine("Available ships:");
+                    _torpedoGameInstance.ShipsToPlace(player).ToList().ForEach(ship => Console.WriteLine(ship));
+
                     Console.WriteLine("Your board:");
                     printBoard(boardToString(_torpedoGameInstance.GetBoard(player)));
+
                     var ship = _torpedoGameInstance.ShipsToPlace(player).First();
                     Console.WriteLine($"Please place your {ship.Size} length ship ([A-Z][0-9][Up|Down|Left|Right])");
                     Console.WriteLine(new string(' ', Console.WindowWidth));
-                    Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    var matches = rxPositionOrientation.Matches(Console.ReadLine().ToLower());
-                    if (matches.Count < 1)
+                    
+                    if(TryParsePositionOrientation(Console.ReadLine(), out var pos, out var ori))
+                    {
+                        ship.Orientation = ori;
+                        _torpedoGameInstance.TryPlaceShip(player, ship, pos);
+                    }
+                    else
                     {
                         Console.WriteLine("Bad format!");
-                        return;
                     }
-                    var groups = matches[0].Groups;
-                    var inRow = ((short)groups[1].Value[0]) - (short)'a';
-                    var inCol = int.Parse(groups[2].Value) - 1;
-                    var inOri = (EOrientation)Enum.Parse(typeof(EOrientation), groups[3].Value.Capitalize());
-
-                    ship.Orientation = inOri;
-                    _torpedoGameInstance.TryPlaceShip(player, ship, new Position(inCol, inRow));
                 }
             };
             Action<Player> RequestPlayerSinkShip = (player) =>
@@ -65,27 +60,27 @@ namespace NationalInstruments
                 printBoard(boardToString(_torpedoGameInstance.GetHitBoard(player)));
 
                 bool success = false;
-                EHitResult res = EHitResult.None;
                 while (!success)
                 {
                     Console.WriteLine("Please select where to hit ([A-Z][0-9])");
-                    var matches = rxPosition.Matches(Console.ReadLine().ToLower());
-                    if (matches.Count < 1)
+                    var input = Console.ReadLine();
+                    if (TryParsePosition(input, out var position))
+                    {
+                        success = _torpedoGameInstance.TryHit(player, position, out var res);
+                        if (!success)
+                        {
+                            Console.WriteLine($"Invalid position! {position}");
+                        }
+                        else
+                        {
+                            Console.WriteLine(res);
+                        }
+                    }
+                    else
                     {
                         Console.WriteLine("Bad format!");
-                        continue;
-                    }
-                    var groups = matches[0].Groups;
-                    var inRow = ((short)groups[1].Value[0]) - (short)'a';
-                    var inCol = int.Parse(groups[2].Value) - 1;
-                    var position = new Position(inCol, inRow);
-                    success = _torpedoGameInstance.TryHit(player, position, out res);
-                    if (!success)
-                    {
-                        Console.WriteLine($"Invalid position! {position}");
                     }
                 }
-                Console.WriteLine(res);
             };
             while (_torpedoGameInstance.GameState != EGameState.None)
             {
@@ -121,13 +116,15 @@ namespace NationalInstruments
                             Console.WriteLine("Game Over!");
                             Console.WriteLine("Results:");
                             Array.ForEach(_torpedoGameInstance.Players.ToArray(), x => Console.WriteLine($"{x.ToString()}: " + (_torpedoGameInstance.IsPlayerDead(x) ? "Lose" : "Win")));
-                            Console.ReadLine();
+                            goto Rest;
                         }
                         break;
                     default:
                         break;
                 }
             }
+        Rest:
+            Console.WriteLine("Bye!");
         }
 
 #nullable enable
@@ -179,9 +176,64 @@ namespace NationalInstruments
         private static void printBoard(string[] board)
         {
             Console.Write(" ");
-            Array.ForEach(Enumerable.Range(1, board.Length).Select(x => x.ToString().PadRight(2)).ToArray(), Console.Write);
+            Array.ForEach(Enumerable.Range('A', board.Length).Select(x => ((char)x).ToString().PadRight(2)).ToArray(), Console.Write);
             Console.WriteLine();
-            Array.ForEach(board.Select((x, i) => (char)(i + 'A') + x).ToArray(), Console.WriteLine);
+            Array.ForEach(board.Select((x, i) => (i + 1).ToString() + x).ToArray(), Console.WriteLine);
+        }
+        private static bool TryParsePosition(string input, out Position output)
+        {
+            var matches = rxPosition.Matches(input.ToLower());
+            if (matches.Count < 1)
+            {
+                output = new Position();
+                return false;
+            }
+            var groups = matches[0].Groups;
+            var inCol = ((short)groups[1].Value[0]) - (short)'a';
+            var inRow = int.Parse(groups[2].Value) - 1;
+
+            output = new Position(inCol, inRow); ;
+            return true;
+        }
+        private static bool TryParsePositionOrientation(string input, out Position position, out EOrientation orientation)
+        {
+            var matches = rxPositionOrientation.Matches(input.ToLower());
+            if (matches.Count < 1)
+            {
+                position = new Position();
+                orientation = EOrientation.Up;
+                return false;
+            }
+            var groups = matches[0].Groups;
+            var inCol = ((short)groups[1].Value[0]) - (short)'a';
+            var inRow = int.Parse(groups[2].Value) - 1;
+            var inOri = (EOrientation)Enum.Parse(typeof(EOrientation), groups[3].Value.Capitalize());
+
+            orientation = inOri;
+            position = new Position(inCol, inRow);
+            return true;
+        }
+        private int AlphaStringToInt(string value)
+        {
+            value = value.Trim().ToLower();
+            int res = 0;
+            for (uint i = (uint)(value.Length - 1); i >= 0; i--)
+            {
+                res += (value[(int)i] - 'a') * IntPow('a' - 'z', i);
+            }
+            return res;
+        }
+        private int IntPow(int x, uint pow)
+        {
+            int ret = 1;
+            while (pow != 0)
+            {
+                if ((pow & 1) == 1)
+                    ret *= x;
+                x *= x;
+                pow >>= 1;
+            }
+            return ret;
         }
     }
     public static class Extensions
