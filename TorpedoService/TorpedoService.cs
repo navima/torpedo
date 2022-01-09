@@ -1,18 +1,15 @@
-#pragma warning disable SA1000 // Keywords should be spaced correctly
+﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
 #nullable enable
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NationalInstruments
 {
-    public class TorpedoService
+    public class TorpedoService : IDataStore
     {
         private readonly List<Player> _players = new();
         private EGameState _gameState = EGameState.AddingPlayers;
@@ -26,12 +23,12 @@ namespace NationalInstruments
         private readonly Dictionary<Player, List<Ship>> _unPlacedShips = new();
         private readonly Dictionary<Player, Dictionary<Position, Ship>> _placedShips = new();
         private readonly Dictionary<Player, Dictionary<Position, EHitResult>> _hitResults = new();
-        private readonly DataStore dataStore;
+        private readonly IDataStore dataStore;
         private readonly (int, int) _tableSize;
         public event EventHandler<StateChangedEventArgs>? GameStateChanged;
 
         #region Constructors
-        public TorpedoService(DataStore dataStore, (int, int) tableSize)
+        public TorpedoService(IDataStore dataStore, (int, int) tableSize)
         {
             this.dataStore = dataStore;
             this._tableSize = tableSize;
@@ -53,7 +50,7 @@ namespace NationalInstruments
         public IDictionary<Ship, int> StartingShips => _startingShips;
         public Player? CurrentPlayer { get; private set; }
         public (int, int) TableSize => _tableSize;
-        public Bounds Bounds { get => new Bounds(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
+        public Bounds Bounds { get => new(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
 
         #endregion
 
@@ -61,7 +58,7 @@ namespace NationalInstruments
         {
             if (_gameState != state)
             {
-                throw new IllegalStateException($"State should be {state.ToString()}");
+                throw new IllegalStateException($"State should be {state}");
             }
         }
 
@@ -306,6 +303,26 @@ namespace NationalInstruments
         }
         [Pure]
         public T[,] GetBlankBoard<T>() => new T[TableSize.Item1, TableSize.Item2];
+
+        public Player? GetPlayerByName(string name)
+        {
+            return dataStore.GetPlayerByName(name);
+        }
+
+        public Player GetOrCreatePlayerByName(string name)
+        {
+            return dataStore.GetOrCreatePlayerByName(name);
+        }
+
+        public Player CreatePlayer(string name)
+        {
+            return dataStore.CreatePlayer(name);
+        }
+
+        public IEnumerable<Player> GetAllPlayers()
+        {
+            return dataStore.GetAllPlayers();
+        }
     }
 
     [Serializable]
