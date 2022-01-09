@@ -32,7 +32,12 @@ namespace NationalInstruments
         {
             if (e.Key == Key.C && OpenedPage == 'O')
             {
-                page.cheatMode();
+                page.CheatMode();
+            }
+
+            if (e.Key == Key.P && OpenedPage == 'O')
+            {
+                page.PlayerViewMode();
             }
         }
 
