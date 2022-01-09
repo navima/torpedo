@@ -1,4 +1,4 @@
-﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
+#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
 #nullable enable
 
@@ -119,6 +119,17 @@ namespace NationalInstruments
                 return false;
             }
         }
+        public void PlaceShipRandom(Player player, Ship ship)
+        {
+            var random = new Random();
+            Array values = Enum.GetValues(typeof(EOrientation));
+            while (!TryPlaceShip(player, ship, Bounds.GetRandomPoint()))
+            {
+#pragma warning disable CS8605 // Unboxing a possibly null value.
+                ship.Orientation = (EOrientation)values.GetValue(random.Next(values.Length)); // This can never be null, thank you very much.
+#pragma warning restore CS8605 // Unboxing a possibly null value.
+            }
+        }
         public void FinishPlacingShips(Player player)
         {
             EnsureState(EGameState.PlacingShips);
@@ -131,9 +142,8 @@ namespace NationalInstruments
                 }
             }
         }
-        public bool TryHit(Player player, Position position, out EHitResult result)
+        public bool CanHit(Player player, Position position)
         {
-            result = EHitResult.None;
             EnsureState(EGameState.SinkingShips);
             if (CurrentPlayer != player)
             {
@@ -147,8 +157,18 @@ namespace NationalInstruments
             {
                 return false;
             }
+            return true;
+        }
+        public bool TryHit(Player player, Position position, out EHitResult result)
+        {
+            result = EHitResult.None;
+            EnsureState(EGameState.SinkingShips);
+            if (!CanHit(player, position))
+            {
+                return false;
+            }
 
-            Func<IDictionary<Position, Ship>, Position, ShipPart?> findHitPart = (ships, position) =>
+            ShipPart? FindHitPart(IDictionary<Position, Ship> ships, Position position)
             {
                 foreach (var (shipPos, ship) in ships)
                 {
@@ -161,14 +181,14 @@ namespace NationalInstruments
                     }
                 }
                 return null;
-            };
+            }
 
             EHitResult resultLocal = EHitResult.Miss;
             var enemies = Players.Where(x => x != player);
             foreach (var enemy in enemies)
             {
                 var ships = PlacedShips(enemy);
-                var hitPart = findHitPart(ships, position);
+                var hitPart = FindHitPart(ships, position);
 
                 if (hitPart != null)
                 {
@@ -191,6 +211,46 @@ namespace NationalInstruments
             IncrementPlayer();
             result = resultLocal;
             return true;
+        }
+        public EHitResult HitSuggested(Player player)
+        {
+            var previousTries = _hitResults[player];
+            var previousHits = previousTries.Where(x => x.Value > EHitResult.Miss);
+            if (previousHits.Any())
+            {
+                var adjacentPositions = previousHits
+                    .Select(x => x.Key)
+                    .SelectMany(x => new[]
+                        {
+                            x + new Position(1, 0),
+                            x + new Position(-1, 0),
+                            x + new Position(0, 1),
+                            x + new Position(0, -1)
+                        })
+                    .Where(x => CanHit(player, x))
+                    .ToArray();
+                var random = new Random();
+                var position = adjacentPositions[random.Next(adjacentPositions.Length)];
+                var success = TryHit(player, position, out var result);
+                if (success)
+                {
+                    return result;
+                }
+                else
+                {
+                    throw new Exception("This should never happen");
+                }
+            }
+            else
+            {
+                while (true)
+                {
+                    if (TryHit(player, Bounds.GetRandomPoint(), out var result))
+                    {
+                        return result;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -277,14 +337,7 @@ namespace NationalInstruments
     }
     public static class EHitResultExtensions
     {
-        public static EHitResult Escalate(this EHitResult self, EHitResult target)
-        {
-            if ((short)target > (short)self)
-            {
-                return target;
-            }
-            return self;
-        }
+        public static EHitResult Escalate(this EHitResult self, EHitResult target) => target > self ? target : self;
     }
 
     public readonly struct Position
@@ -297,6 +350,9 @@ namespace NationalInstruments
 
         public int X { get; init; }
         public int Y { get; init; }
+
+        public static Position operator +(Position left, Position right) => new(left.X + right.X, left.Y + right.Y);
+        public static Position operator -(Position left, Position right) => new(left.X - right.X, left.Y - right.Y);
 
         #region Junk
         public override bool Equals(object? obj)
@@ -345,6 +401,14 @@ namespace NationalInstruments
                 && position.Y >= Y
                 && position.X <= Width
                 && position.Y <= Height;
+        }
+
+        public Position GetRandomPoint()
+        {
+            var random = new Random();
+            var x = random.Next(X, X + Width - 1);
+            var y = random.Next(Y, Y + Height - 1);
+            return new Position(x, y);
         }
 
         #region Junk
