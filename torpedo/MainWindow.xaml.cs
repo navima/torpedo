@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -30,12 +30,12 @@ namespace NationalInstruments
         {
             if (e.Key == Key.C && _openedPage == 'O')
             {
-                _page.CheatMode();
+                _page?.CheatMode();
             }
 
             if (e.Key == Key.P && _openedPage == 'O')
             {
-                _page.PlayerViewMode();
+                _page?.PlayerViewMode();
             }
         }
 
@@ -44,7 +44,7 @@ namespace NationalInstruments
             var w = new NameGetWindow();
             if (w.ShowDialog() ?? false)
             {
-                _page = new GridPage(w.GetPlayername(), "AI");
+                _page = new GridPage(w.PlayerName, "AI");
                 Main.Content = _page;
                 _openedPage = 'O';
             }
@@ -53,9 +53,9 @@ namespace NationalInstruments
         private void GameClicked2(object sender, RoutedEventArgs e)
         {
             var w = new NameGetWindow2();
-            if (w.ShowDialog() == false)
+            if (w.ShowDialog() ?? false)
             {
-                Main.Content = new GridPage(w.GetPlayername1(), w.GetPlayername2());
+                Main.Content = new GridPage(w.PlayerName1, w.PlayerName2);
                 _openedPage = 'T';
             }
         }

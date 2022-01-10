@@ -22,59 +22,24 @@ namespace NationalInstruments
     /// </summary>
     public partial class NameGetWindow2 : Window
     {
-        private string _playername1 = string.Empty;
-        public string GetPlayername1()
-        {
-            return _playername1;
-        }
+        public string PlayerName1 { get; set; } = "Player1";
+        public string PlayerName2 { get; set; } = "Player2";
 
-        private string _playername2 = string.Empty;
-        public string GetPlayername2()
-        {
-            return _playername2;
-        }
         public NameGetWindow2()
         {
             InitializeComponent();
         }
-        public bool CheckName(string name)
-        {
-            var reg = new Regex("^[a-zA-Z0-9]*$");
-            if (!(reg.IsMatch(name)))
-            {
-                System.Windows.MessageBox.Show("Name can only contain letters and numbers");
-            }
-            else
-            {
-                if (name.Length < 3 || name.Length > 9)
-                {
-                    System.Windows.MessageBox.Show("Name must be between 3 and 9 characters");
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+        public bool CheckName(string name) => Validation.ValidateName(name);
         private void SubmitClicked(object sender, RoutedEventArgs e)
         {
             if (CheckName(InputBox.Text) && CheckName(InputBox2.Text))
             {
-                _playername1 = InputBox.Text;
-                _playername2 = InputBox2.Text;
+                DialogResult = true;
                 this.Close();
             }
-        }
-        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-        }
-
-        private void ClosingEvent(object sender, CancelEventArgs e)
-        {
-            if (_playername1 == string.Empty || _playername2 == string.Empty)
+            else
             {
-                e.Cancel = true;
+                MessageBox.Show("Name can only contain letters and numbers, and must be between 3 and 9 characters");
             }
         }
     }

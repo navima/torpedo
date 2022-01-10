@@ -23,37 +23,25 @@ namespace NationalInstruments
     public partial class NameGetWindow : Window
     {
 
-        public string? PlayerName { get; private set; }
+        public string PlayerName { get; set; } = "Player1";
 
         public NameGetWindow()
         {
             InitializeComponent();
-            DialogResult = false;
         }
 
-        public bool CheckName(string name)
-        {
-            var reg = new Regex("^[a-zA-Z0-9]*$");
-            if (!(reg.IsMatch(name)))
-            {
-                MessageBox.Show("Name can only contain letters and numbers");
-                return false;
-            }
-            if (name.Length < 3 || name.Length > 9)
-            {
-                MessageBox.Show("Name must be between 3 and 9 characters");
-                return false;
-            }
-            return true;
-        }
+        public bool CheckName(string name) => Validation.ValidateName(name);
 
         private void SubmitClicked(object sender, RoutedEventArgs e)
         {
             if (CheckName(InputBox.Text))
             {
-                PlayerName = InputBox.Text;
                 DialogResult = true;
                 this.Close();
+            }
+            else
+            {
+                MessageBox.Show("Name can only contain letters and numbers, and must be between 3 and 9 characters");
             }
         }
     }

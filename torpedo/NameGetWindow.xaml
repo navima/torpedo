@@ -10,7 +10,7 @@
 
     <Grid Height="130" VerticalAlignment="Top">
         <Button Content="Submit" HorizontalAlignment="Left" Height="21" Margin="59,63,0,0" VerticalAlignment="Top" Width="73" Click="SubmitClicked"/>
-        <TextBox x:Name="InputBox" HorizontalAlignment="Left" Margin="40,33,0,0" TextWrapping="Wrap" Text="Player" VerticalAlignment="Top" Width="120" Height="18"/>
+        <TextBox x:Name="InputBox" HorizontalAlignment="Left" Margin="40,33,0,0" TextWrapping="Wrap" Text="{Binding Path=PlayerName, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" VerticalAlignment="Top" Width="120" Height="18"/>
 
     </Grid>
 </Window>
