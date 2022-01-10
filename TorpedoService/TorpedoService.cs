@@ -1,4 +1,4 @@
-﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
+#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
 #nullable enable
 
@@ -423,8 +423,8 @@ namespace NationalInstruments
         public Position GetRandomPoint()
         {
             var random = new Random();
-            var x = random.Next(X, X + Width - 1);
-            var y = random.Next(Y, Y + Height - 1);
+            var x = random.Next(X, X + Width+1);
+            var y = random.Next(Y, Y + Height+1);
             return new Position(x, y);
         }
 
