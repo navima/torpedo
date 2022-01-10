@@ -1,57 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NationalInstruments
+﻿namespace NationalInstruments
 {
     internal class PlayerStats
     {
-        private int _sunken_ships = 0;
-        public int GetSunken_Ships()
-        {
-            return _sunken_ships;
-        }
-        public void IncrementSunkenShips()
-        {
-            _sunken_ships++;
-        }
-
-        private int _hits = 0;
-        public int GetHits()
-        {
-            return _hits;
-        }
-        public void IncrementHits()
-        {
-            _hits++;
-        }
-
-        private int _misses = 0;
-        public int GetMisses()
-        {
-            return _misses;
-        }
-        public void IncrementMisses()
-        {
-            _misses++;
-        }
+        public int SunkenShips { get; private set; }
+        public void IncrementSunkenShips() => SunkenShips++;
+        public int Hits { get; private set; }
+        public void IncrementHits() => Hits++;
+        public int Misses { get; private set; }
+        public void IncrementMisses() => Misses++;
 
         private readonly string[] _shipStatus = new string[] { "Not placed yet", "Not placed yet", "Not placed yet", "Not placed yet" };
-
-        public string[] GetShipStatus()
-        {
-            return _shipStatus;
-        }
-
-        public string GetShipStatusItem(int n)
-        {
-            return _shipStatus[n];
-        }
-        public void SetShipStatus(int n, string s)
-        {
-            _shipStatus[n] = s;
-        }
+        public string[] GetShipStatus() => _shipStatus;
+        public string GetShipStatusItem(int n) => _shipStatus[n];
+        public void SetShipStatus(int n, string s) => _shipStatus[n] = s;
     }
 }

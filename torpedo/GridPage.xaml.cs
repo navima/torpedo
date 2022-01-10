@@ -164,9 +164,9 @@ namespace NationalInstruments
             {
                 tb = Player2Status;
             }
-            int sunken_ships = _playerStats[player.Name].GetSunken_Ships();
-            int hits = _playerStats[player.Name].GetHits();
-            int misses = _playerStats[player.Name].GetMisses();
+            int sunken_ships = _playerStats[player.Name].SunkenShips;
+            int hits = _playerStats[player.Name].Hits;
+            int misses = _playerStats[player.Name].Misses;
             string[] shipStatus = _playerStats[player.Name].GetShipStatus();
             tb.Text = ($"sunken ships: {sunken_ships} \nhits: {hits} \nmisses: {misses} \nship-1: {shipStatus[0]} \nship-2: {shipStatus[1]} \nship-3: {shipStatus[2]} \nship-4: {shipStatus[3]}");
         }
