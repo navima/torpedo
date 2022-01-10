@@ -137,6 +137,7 @@ namespace NationalInstruments
                 var wraparound = IncrementPlayer();
                 if (wraparound)
                 {
+                    Rounds = 1;
                     GameState = EGameState.SinkingShips;
                 }
             }
@@ -263,10 +264,10 @@ namespace NationalInstruments
                 return false;
             }
             var index = CurrentPlayer is not null ? _players.IndexOf(CurrentPlayer) : -1;
-            Rounds++;
             if (index == _players.Count - 1 || index == -1)
             {
                 CurrentPlayer = _players[0];
+                Rounds++;
                 return true;
             }
             else
