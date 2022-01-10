@@ -213,9 +213,7 @@ namespace NationalInstruments
         {
             var previousTries = _hitResults[player];
             var previousHits = previousTries.Where(x => x.Value > EHitResult.Miss);
-            if (previousHits.Any())
-            {
-                var adjacentPositions = previousHits
+            var adjacentPositions = previousHits
                     .Select(x => x.Key)
                     .SelectMany(x => new[]
                         {
@@ -226,6 +224,8 @@ namespace NationalInstruments
                         })
                     .Where(x => CanHit(player, x))
                     .ToArray();
+            if (adjacentPositions.Any())
+            {
                 var random = new Random();
                 var position = adjacentPositions[random.Next(adjacentPositions.Length)];
                 var success = TryHit(player, position, out var result);
