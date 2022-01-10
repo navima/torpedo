@@ -24,9 +24,9 @@ namespace NationalInstruments
     {
         private char[] letters = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I' };
         private int time = 0;
-        private int turns = 0;
+        private int turns = 1;
         private bool inCheatMode = false;
-        private bool inAIMode = true;
+        private bool inAIMode = false;
         private bool inPlayerViewMode = false;
         private DataStore dataStore;
         private TorpedoService _torpedoGameInstance;
@@ -37,15 +37,28 @@ namespace NationalInstruments
         private Player aiPlayer;
         private List<Position> aiCandidates = new List<Position>();
 
+        private Player winner;
+
+        private Dictionary<string,PlayerStats> playerStats = new Dictionary<string, PlayerStats>();
+
         TorpedoButton[,] buttonArray = new TorpedoButton[9, 9];
 
-        private void UpdatingUI()
+        private void UpdateUI()
         {
-            UpdatingInstrucitons();
-            UpdatingRounds();
+            UpdateInstrucitons();
+            UpdateRounds();
+
+            if(_torpedoGameInstance.GameState == EGameState.GameOver)
+            {
+                LockTable();
+            }
+            _torpedoGameInstance.Players.ToList().ForEach(player =>
+            {
+                UpdateStats(player);
+            });
         }
 
-        private void UpdatingInstrucitons()
+        private void UpdateInstrucitons()
         {
             if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
             {
@@ -54,12 +67,65 @@ namespace NationalInstruments
             if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
             {
                 Instruction.Text = "Click on the area you want to sink";
+                if (inAIMode)
+                {
+                    Instruction.Text += "\nYou can check the enemy ships with button C and your own board with button P";
+                }
+            }
+            if (_torpedoGameInstance.GameState == EGameState.GameOver)
+            {
+                Instruction.Text = "The game is over, you can check your score in the High Scores tab";
             }
         }
 
-        private void UpdatingRounds()
+        private void UpdateRounds()
         {
-            turnlabel.Text = ($"Turn {turns.ToString()}: {_torpedoGameInstance.CurrentPlayer}'s turn");
+            if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
+            {
+                turnlabel.Text = ("Placing ships");
+            }
+            if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
+            {
+                turnlabel.Text = ($"Turn {turns}, {_torpedoGameInstance.CurrentPlayer}'s turn");
+            }
+            if (_torpedoGameInstance.GameState == EGameState.GameOver)
+            {
+                turnlabel.Text = ($"Game over, {winner.Name} won");
+            }
+        }
+
+        private void UpdateStats(Player player)
+        {
+            TextBlock tb;
+            if(player.Name == label_player1.Text)
+            {
+                tb = Player1Status;
+            }
+            else
+            {
+                tb = Player2Status;
+            }
+            int sunken_ships = playerStats[player.Name].GetSunken_Ships();
+            int hits = playerStats[player.Name].GetHits();
+            int misses = playerStats[player.Name].GetMisses();
+            string[] shipStatus = playerStats[player.Name].GetShipStatus();
+            tb.Text = ($"sunken ships: {sunken_ships} \nhits: {hits} \nmisses: {misses} \nship-1: {shipStatus[0]} \nship-2: {shipStatus[1]} \nship-3: {shipStatus[2]} \nship-4: {shipStatus[3]}");
+        }
+
+        private void LockTable()
+        {
+            for(int i=0; i<9; i++)
+            {
+                for(int j=0; j<9; j++)
+                {
+                    buttonArray[i, j].IsEnabled = false;
+                    if(buttonArray[i,j].Content != "X")
+                    {
+                        buttonArray[i, j].Content = " ";
+                        buttonArray[i, j].Background = cyan;
+                    }
+                }
+            }
         }
 
         public void CheatMode()
@@ -82,14 +148,14 @@ namespace NationalInstruments
 
         public void PlayerViewMode()
         {
-            if (!inPlayerViewMode && _torpedoGameInstance.GameState == EGameState.SinkingShips)
+            if (!inPlayerViewMode && _torpedoGameInstance.GameState == EGameState.SinkingShips || !inPlayerViewMode && _torpedoGameInstance.GameState == EGameState.GameOver)
             {
                 Debug.WriteLine("Playervievmode enabled");
                 inPlayerViewMode = true;
                 EHitResult?[,] board = _torpedoGameInstance.GetHitBoard(aiPlayer);
                 UpdatePlaying(board);
             }
-            else
+            else if(inPlayerViewMode)
             {
                 Debug.WriteLine("Playervievmode disabled");
                 inPlayerViewMode = false;
@@ -108,7 +174,6 @@ namespace NationalInstruments
             else if(_torpedoGameInstance.GameState == EGameState.SinkingShips)
             {
                 Shoot(x, y);
-                UpdatePlaying(_torpedoGameInstance.GetHitBoard(_torpedoGameInstance.CurrentPlayer));
             }
         }
 
@@ -184,6 +249,10 @@ namespace NationalInstruments
                             buttonArray[i,j].IsEnabled = true;
                             break;
                     }
+                    if (inPlayerViewMode)
+                    {
+                        buttonArray[i, j].IsEnabled = false;
+                    }
                 }
             }
         }
@@ -257,9 +326,10 @@ namespace NationalInstruments
 
         private void PlaceShip(Player player, Ship ship, Position position)
         {
-            if(_torpedoGameInstance.TryPlaceShip(player, ship, position))
+            if (_torpedoGameInstance.TryPlaceShip(player, ship, position))
             {
-                if(ship.Size == 4)
+                playerStats[player.Name].SetShipStatus(ship.Size - 1, "Placed");
+                if (ship.Size == 4)
                 {
                     Debug.WriteLine("Last ship placed");
                     _torpedoGameInstance.FinishPlacingShips(player);
@@ -284,6 +354,7 @@ namespace NationalInstruments
                 selectedButton.Background = lightgray;
                 selectedButton = null;
             }
+            UpdateUI();
         }
 
         private void MoveState()
@@ -296,13 +367,31 @@ namespace NationalInstruments
                     UpdatePlacing(_torpedoGameInstance.GetBoard(_torpedoGameInstance.CurrentPlayer));
                     AI_place();
                 }
+                else
+                {
+                    Debug.WriteLine($"{_torpedoGameInstance.CurrentPlayer} is placing ships");
+                    UpdatePlacing(_torpedoGameInstance.GetBoard(_torpedoGameInstance.CurrentPlayer));
+                    UpdateUI();
+                }
             }
             else if(_torpedoGameInstance.GameState == EGameState.SinkingShips)
             {
                 Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
-                UpdatePlaying(_torpedoGameInstance.GetHitBoard(aiPlayer));
+                StartTimer();
+                if (inAIMode)
+                {
+                    UpdatePlaying(_torpedoGameInstance.GetHitBoard(aiPlayer));
+                }
+                else
+                {
+                    UpdatePlaying(_torpedoGameInstance.GetHitBoard(_torpedoGameInstance.CurrentPlayer));
+                }
             }
-            UpdatingUI();
+            if(_torpedoGameInstance.GameState == EGameState.GameOver)
+            {
+                FinishGame();
+                UpdateUI();
+            }
         }
 
         private void AI_place()
@@ -361,17 +450,53 @@ namespace NationalInstruments
 
         private void Shoot(int x, int y)
         {
+            Player player = _torpedoGameInstance.CurrentPlayer;
+            CheckSunkenShips(player);
             Debug.Write($"{_torpedoGameInstance.CurrentPlayer} is trying to hit position {x}:{y}. ");
-            bool success = _torpedoGameInstance.TryHit(_torpedoGameInstance.CurrentPlayer, new Position(x, y), out var res);
+            bool success = _torpedoGameInstance.TryHit(player, new Position(x, y), out var res);
             Debug.Write($"{res} \n");
-            AI_shoot();
-            turns++;
-            UpdatingUI();
+            switch (res)
+            {
+                case EHitResult.Sink:
+                    playerStats[player.Name].IncrementSunkenShips();
+                    break;
+                case EHitResult.Hit:
+                    playerStats[player.Name].IncrementHits();
+                    break;
+                default:
+                    playerStats[player.Name].IncrementMisses();
+                    break;
+
+            }
+            if(_torpedoGameInstance.GameState != EGameState.GameOver)
+            {
+                if(inAIMode)
+                {
+                    AI_shoot();
+                    turns++;
+                    UpdatePlaying(_torpedoGameInstance.GetHitBoard(_torpedoGameInstance.CurrentPlayer));
+                }
+                else
+                {
+                    if(_torpedoGameInstance.CurrentPlayer == _torpedoGameInstance.Players.First())
+                    {
+                        turns++;
+                    }
+                    UpdatePlaying(_torpedoGameInstance.GetHitBoard(_torpedoGameInstance.CurrentPlayer));
+                }
+            }
+            else
+            {
+                MoveState();
+            }
+            UpdateUI();
         }
 
         private void AI_shoot()
         {
             Random rand = new Random();
+            Player player = _torpedoGameInstance.CurrentPlayer;
+            CheckSunkenShips(player);
             EHitResult?[,] table = _torpedoGameInstance.GetHitBoard(humanPlayer);
             while(_torpedoGameInstance.CurrentPlayer != humanPlayer)
             {
@@ -383,8 +508,21 @@ namespace NationalInstruments
                     y = aiCandidates.First().Y;
                     aiCandidates.RemoveAt(0);
                 }
-                if(_torpedoGameInstance.TryHit(_torpedoGameInstance.CurrentPlayer, new Position(x,y), out var res))
+                if(_torpedoGameInstance.TryHit(player, new Position(x,y), out var res))
                 {
+                    switch (res)
+                    {
+                        case EHitResult.Sink:
+                            playerStats[player.Name].IncrementSunkenShips();
+                            CheckSunkenShips(player);
+                            break;
+                        case EHitResult.Hit:
+                            playerStats[player.Name].IncrementHits();
+                            break;
+                        default:
+                            playerStats[player.Name].IncrementMisses();
+                            break;
+                    }
                     Debug.Write($"AI is trying to hit position {x}:{y}. {res}");
                     if (res == EHitResult.Hit)
                     {
@@ -400,7 +538,43 @@ namespace NationalInstruments
                     Debug.Write("Can't hit this position\n");
                 }
             }
+            UpdateUI();
         }
+
+        public void CheckSunkenShips(Player player)
+        {
+            _torpedoGameInstance.PlacedShips(player).ToList().ForEach(x =>
+            {
+                if (x.Value.Dead)
+                {
+                    Debug.WriteLine($"Ship-{x.Value.Size - 1} sunk");
+                    playerStats[player.Name].SetShipStatus(x.Value.Size - 1, "sunk");
+                }
+            });
+        }
+
+        public void FinishGame()
+        {
+            Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
+            Array.ForEach(_torpedoGameInstance.Players.ToArray(), x =>
+            {
+                if (_torpedoGameInstance.IsPlayerDead(x))
+                {
+                    Debug.WriteLine($"Player {x.Name} lost");
+                    for(int i=0; i<4; i++)
+                    {
+                        playerStats[x.Name].SetShipStatus(i, "sunk");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"Playere {x.Name} won");
+                    winner = x;
+                    UpdatePlaying(_torpedoGameInstance.GetHitBoard(x));
+                }
+            });
+        }
+
         private void StartTimer()
         {
             DispatcherTimer dt = new DispatcherTimer();
@@ -411,7 +585,10 @@ namespace NationalInstruments
 
         private void IncrementTime(object sender, EventArgs e)
         {
-            time++;
+            if(_torpedoGameInstance.GameState != EGameState.GameOver)
+            {
+                time++;
+            }
             if (time % 60 < 10)
             {
                 timer.Text= ($"0{time / 60}:0{time % 60}");
@@ -432,8 +609,12 @@ namespace NationalInstruments
                 inAIMode = true;
                 Debug.WriteLine("Game is in AI mode");
             }
+            else
+            {
+                inAIMode=false;
+                Debug.WriteLine("Game is not in AI mode");
+            }
             turnlabel.Text = $"Turn {turns}\n{player1}'s turn to place ships";
-            StartTimer();
         }
 
         private void InitTable()
@@ -516,7 +697,9 @@ namespace NationalInstruments
             _torpedoGameInstance.FinishAddingPlayers();
             Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
             Debug.WriteLine($"Current ship to palce is: {_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
-            UpdatingUI();
+            playerStats.Add(label_player1.Text,new PlayerStats());
+            playerStats.Add(label_player2.Text, new PlayerStats());
+            UpdateUI();
         }
 
         public GridPage(string player1 = "Player1", string player2 = "Player2")
