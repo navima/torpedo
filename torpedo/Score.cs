@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace NationalInstruments
 {
-    internal class ScoreClass
+    internal class Score
     {
         string _name;
-
     }
 }

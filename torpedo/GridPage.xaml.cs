@@ -16,6 +16,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 
 #pragma warning disable CA1305 // Specify IFormatProvider
+#pragma warning disable SA1000 // Keywords should be spaced correctly
 
 namespace NationalInstruments
 {
@@ -168,8 +169,16 @@ namespace NationalInstruments
             int sunken_ships = _playerStats[player.Name].SunkenShips;
             int hits = _playerStats[player.Name].Hits;
             int misses = _playerStats[player.Name].Misses;
-            string[] shipStatus = _playerStats[player.Name].GetShipStatus();
-            tb.Text = ($"sunken ships: {sunken_ships} \nhits: {hits} \nmisses: {misses} \nship-1: {shipStatus[0]} \nship-2: {shipStatus[1]} \nship-3: {shipStatus[2]} \nship-4: {shipStatus[3]}");
+            var shipStatus = _playerStats[player.Name].GetShipStatuses();
+            StringBuilder sb = new();
+            sb.AppendLine($"Sunken ships: {sunken_ships}");
+            sb.AppendLine($"Hits: {hits}");
+            sb.AppendLine($"Misses: {misses}");
+            foreach (var (ship, status) in shipStatus)
+            {
+                sb.AppendLine($"ship {ship.Size}: {status.ToUserReadableString()}");
+            }
+            tb.Text = sb.ToString();
         }
 
         private void LockTable()
@@ -195,7 +204,7 @@ namespace NationalInstruments
                 if (x.Value.Dead)
                 {
                     Debug.WriteLine($"Ship-{x.Value.Size - 1} sunk");
-                    _playerStats[player.Name].SetShipStatus(x.Value.Size - 1, "sunk");
+                    _playerStats[player.Name].SetShipStatus(x.Value, EShipStatus.Dead);
                 }
             });
         }
@@ -446,7 +455,7 @@ namespace NationalInstruments
         {
             if (_torpedoGameInstance.TryPlaceShip(player, ship, position))
             {
-                _playerStats[player.Name].SetShipStatus(ship.Size - 1, "Placed");
+                _playerStats[player.Name].SetShipStatus(ship, EShipStatus.Placed);
                 if (ship.Size == 4)
                 {
                     Debug.WriteLine("Last ship placed");
@@ -474,7 +483,7 @@ namespace NationalInstruments
                 var ship = _torpedoGameInstance.ShipsToPlace(_aiPlayer).First();
                 Debug.WriteLine($"Current ship to place is {ship.Size}");
                 _torpedoGameInstance.PlaceShipRandom(_aiPlayer, ship);
-                _playerStats[_aiPlayer.Name].SetShipStatus(ship.Size - 1, "Placed");
+                _playerStats[_aiPlayer.Name].SetShipStatus(ship, EShipStatus.Placed);
             }
             _torpedoGameInstance.FinishPlacingShips(_aiPlayer);
             UpdateUI();
@@ -526,9 +535,9 @@ namespace NationalInstruments
                 if (_torpedoGameInstance.IsPlayerDead(x))
                 {
                     Debug.WriteLine($"Player {x.Name} lost");
-                    for (int i = 0; i < 4; i++)
+                    foreach (var (ship, _) in _playerStats[x.Name].GetShipStatuses())
                     {
-                        _playerStats[x.Name].SetShipStatus(i, "sunk");
+                        _playerStats[x.Name].SetShipStatus(ship, EShipStatus.Dead);
                     }
                 }
                 else
