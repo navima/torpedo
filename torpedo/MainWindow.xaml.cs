@@ -20,10 +20,12 @@ namespace NationalInstruments
     {
         private char _openedPage = 'N';
         private GridPage? _page = null;
+        private IDataStore _store;
 
         public MainWindow()
         {
             InitializeComponent();
+            _store = new InMemoryDataStore();
         }
 
         private void WindowKeyPressed(object sender, KeyEventArgs e)
@@ -44,7 +46,7 @@ namespace NationalInstruments
             var w = new NameGetWindow();
             if (w.ShowDialog() ?? false)
             {
-                _page = new GridPage(w.PlayerName, "AI");
+                _page = new GridPage(_store, w.PlayerName, "AI");
                 Main.Content = _page;
                 _openedPage = 'O';
             }
@@ -55,14 +57,14 @@ namespace NationalInstruments
             var w = new NameGetWindow2();
             if (w.ShowDialog() ?? false)
             {
-                Main.Content = new GridPage(w.PlayerName1, w.PlayerName2);
+                Main.Content = new GridPage(_store, w.PlayerName1, w.PlayerName2);
                 _openedPage = 'T';
             }
         }
 
         private void ScoreClicked(object sender, RoutedEventArgs e)
         {
-            Main.Content = new ScorePage();
+            Main.Content = new ScorePage(_store);
             _openedPage = 'S';
         }
         private void CloseApplication(object sender, RoutedEventArgs e)

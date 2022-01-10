@@ -27,17 +27,16 @@ namespace NationalInstruments
     {
         private const string _letters = "ABCDEFGHI";
         private int _time = 0;
-        private int _turns = 1;
 
         private bool _inCheatMode = false;
         private bool _inAIMode = false;
         private bool _inPlayerViewMode = false;
 
-        private IDataStore? _dataStore;
-        private TorpedoService? _torpedoGameInstance;
+        private IDataStore _dataStore;
+        private TorpedoService _torpedoGameInstance;
         private TorpedoButton? _selectedButton;
         private Player? _humanPlayer;
-        private Player? _aiPlayer;
+        private Player _aiPlayer;
         private Player? _winner;
         private readonly Dictionary<string, PlayerStats> _playerStats = new ();
         private readonly TorpedoButton[,] _buttonArray = new TorpedoButton[9, 9];
@@ -336,18 +335,13 @@ namespace NationalInstruments
 
         private void StartGame()
         {
-            _dataStore = new InMemoryDataStore();
-            _torpedoGameInstance = new (_dataStore, (9, 9));
-            Debug.WriteLine("Initialized service");
             Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
-            if (label_player2.Text == "AI")
+            if (_inAIMode)
             {
-                _inAIMode = true;
                 Debug.WriteLine("Game is in AI mode");
             }
             else
             {
-                _inAIMode = false;
                 Debug.WriteLine("Game is not in AI mode");
             }
 
@@ -605,9 +599,14 @@ namespace NationalInstruments
 
         #endregion
 
-        public GridPage(string player1 = "Player1", string player2 = "Player2")
+        public GridPage(IDataStore dataStore, string player1 = "Player1", string player2 = "Player2")
         {
             InitializeComponent();
+            _dataStore = dataStore;
+            _torpedoGameInstance = new TorpedoService(_dataStore, (9, 9));
+            _aiPlayer = _dataStore.GetOrCreatePlayerByName("AI");
+            _humanPlayer = _dataStore.GetOrCreatePlayerByName(player1);
+            _inAIMode = player2 == "AI";
             InitializeGridPage(player1, player2);
             StartGame();
         }

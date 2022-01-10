@@ -20,9 +20,11 @@ namespace NationalInstruments
     /// </summary>
     public partial class ScorePage : Page
     {
-        public ScorePage()
+        private readonly IDataStore _dataStore;
+        public ScorePage(IDataStore dataStore)
         {
             InitializeComponent();
+            _dataStore = dataStore;
         }
     }
 }
