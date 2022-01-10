@@ -134,39 +134,24 @@ namespace NationalInstruments
 
         private void UpdateInstructions()
         {
-            if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
-            {
-                Instruction.Text = "Click on the area where you want to place your ship then an adjecent area where you want your ship to face";
-            }
-            if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
-            {
-                Instruction.Text = "Click on the area you want to sink";
-                if (_inAIMode)
-                {
-                    Instruction.Text += "\nYou can check the enemy ships with button C and your own board with button P";
-                }
-            }
-            if (_torpedoGameInstance.GameState == EGameState.GameOver)
-            {
-                Instruction.Text = "The game is over, you can check your score in the High Scores tab";
-            }
+            Instruction.Text = CreateInstructionLabelText();
         }
-
-        private void UpdateRounds()
+        private string CreateInstructionLabelText() => _torpedoGameInstance.GameState switch
         {
-            if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
-            {
-                turnlabel.Text = ($"Placing ships, {_torpedoGameInstance.CurrentPlayer}'s turn");
-            }
-            if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
-            {
-                turnlabel.Text = ($"Turn {_turns}, {_torpedoGameInstance.CurrentPlayer}'s turn");
-            }
-            if (_torpedoGameInstance.GameState == EGameState.GameOver)
-            {
-                turnlabel.Text = ($"Game over, {_winner.Name} won");
-            }
-        }
+            EGameState.PlacingShips => "Click on the area where you want to place your ship then an adjecent area where you want your ship to face",
+            EGameState.SinkingShips => "Click on the area you want to sink" + (_inAIMode ? "\nYou can check the enemy ships with button C and your own board with button P" : string.Empty),
+            EGameState.GameOver => "The game is over, you can check your score in the High Scores tab",
+            _ => string.Empty
+        };
+
+        private void UpdateRounds() => turnlabel.Text = CreateLabelText();
+        private string CreateLabelText() => _torpedoGameInstance.GameState switch
+        {
+            EGameState.PlacingShips => $"Placing ships, {_torpedoGameInstance.CurrentPlayer}'s turn",
+            EGameState.SinkingShips => $"Turn {_turns}, {_torpedoGameInstance.CurrentPlayer}'s turn",
+            EGameState.GameOver => $"Game over, {_winner.Name} won",
+            _ => string.Empty
+        };
 
         private void UpdateStats(Player player)
         {
