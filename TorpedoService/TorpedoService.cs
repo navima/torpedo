@@ -1,5 +1,6 @@
-#pragma warning disable SA1000 // Keywords should be spaced correctly
+﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
+#pragma warning disable CA2201 // Do not raise reserved exception types
 #nullable enable
 
 using System;
@@ -51,7 +52,7 @@ namespace NationalInstruments
         public Player? CurrentPlayer { get; private set; }
         public (int, int) TableSize => _tableSize;
         public Bounds Bounds { get => new(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
-
+        public int Rounds { get; private set; }
         #endregion
 
         private void EnsureState(EGameState state)
@@ -77,6 +78,7 @@ namespace NationalInstruments
                 _placedShips.Add(player, new Dictionary<Position, Ship>());
                 _hitResults.Add(player, new Dictionary<Position, EHitResult>());
             }
+
             IncrementPlayer();
             GameState = EGameState.PlacingShips;
         }
@@ -261,6 +263,7 @@ namespace NationalInstruments
                 return false;
             }
             var index = CurrentPlayer is not null ? _players.IndexOf(CurrentPlayer) : -1;
+            Rounds++;
             if (index == _players.Count - 1 || index == -1)
             {
                 CurrentPlayer = _players[0];
@@ -322,6 +325,16 @@ namespace NationalInstruments
         public IEnumerable<Player> GetAllPlayers()
         {
             return dataStore.GetAllPlayers();
+        }
+
+        public void AddOutcome(Outcome outcome)
+        {
+            dataStore.AddOutcome(outcome);
+        }
+
+        public IEnumerable<Outcome> GetAllOutcomes()
+        {
+            return dataStore.GetAllOutcomes();
         }
     }
 
@@ -423,8 +436,8 @@ namespace NationalInstruments
         public Position GetRandomPoint()
         {
             var random = new Random();
-            var x = random.Next(X, X + Width+1);
-            var y = random.Next(Y, Y + Height+1);
+            var x = random.Next(X, X + Width + 1);
+            var y = random.Next(Y, Y + Height + 1);
             return new Position(x, y);
         }
 
