@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -483,44 +483,15 @@ namespace NationalInstruments
 
         private void AI_place()
         {
-            ShipPart?[,] parts = _torpedoGameInstance.GetBoard(_aiPlayer);
-            Debug.WriteLine($"Current ship to place is {_torpedoGameInstance.ShipsToPlace(_aiPlayer).First().Size}");
-            while (_torpedoGameInstance.GameState == EGameState.PlacingShips)
+            while (_torpedoGameInstance.ShipsToPlace(_aiPlayer).Any())
             {
-                Random rand = new Random();
-                int x = rand.Next(0, 9);
-                int y = rand.Next(0, 9);
-                if (_torpedoGameInstance.ShipsToPlace(_aiPlayer).First().Size == 1)
-                {
-                    EvaluatePlacement(_buttonArray[x, y]);
-                }
-                else
-                {
-                    EvaluatePlacement(_buttonArray[x, y]);
-                    int side = rand.Next(0, 4);
-                    switch (side)
-                    {
-                        case 0:
-                            x += 1;
-                            break;
-                        case 1:
-                            x -= 1;
-                            break;
-                        case 2:
-                            y += 1;
-                            break;
-
-                        default:
-                            y -= 1;
-                            break;
-                    }
-                    if (x < 0 || y < 0 || x > 8 || y > 8)
-                    {
-                        continue;
-                    }
-                    EvaluatePlacement(_buttonArray[x, y]);
-                }
+                var ship = _torpedoGameInstance.ShipsToPlace(_aiPlayer).First();
+                Debug.WriteLine($"Current ship to place is {ship.Size}");
+                _torpedoGameInstance.PlaceShipRandom(_aiPlayer, ship);
+                _playerStats[_aiPlayer.Name].SetShipStatus(ship.Size - 1, "Placed");
             }
+            _torpedoGameInstance.FinishPlacingShips(_aiPlayer);
+            UpdateUI();
         }
 
         private void Shoot(int x, int y)
@@ -565,48 +536,7 @@ namespace NationalInstruments
 
         private void AI_shoot()
         {
-            Random rand = new Random();
-            Player player = _torpedoGameInstance.CurrentPlayer;
-            EHitResult?[,] table = _torpedoGameInstance.GetHitBoard(_humanPlayer);
-            while (_torpedoGameInstance.CurrentPlayer != _humanPlayer)
-            {
-                int x = rand.Next(0, 9);
-                int y = rand.Next(0, 9);
-                if (_aiCandidates.Count != 0)
-                {
-                    x = _aiCandidates.First().X;
-                    y = _aiCandidates.First().Y;
-                    _aiCandidates.RemoveAt(0);
-                }
-                if (_torpedoGameInstance.TryHit(player, new Position(x, y), out var res))
-                {
-                    switch (res)
-                    {
-                        case EHitResult.Sink:
-                            _playerStats[player.Name].IncrementSunkenShips();
-                            break;
-                        case EHitResult.Hit:
-                            _playerStats[player.Name].IncrementHits();
-                            break;
-                        default:
-                            _playerStats[player.Name].IncrementMisses();
-                            break;
-                    }
-                    Debug.Write($"AI is trying to hit position {x}:{y}. {res}");
-                    if (res == EHitResult.Hit)
-                    {
-                        Debug.WriteLine("Adding surrounding tiles to list");
-                        _aiCandidates.Add(new Position(x + 1, y));
-                        _aiCandidates.Add(new Position(x - 1, y));
-                        _aiCandidates.Add(new Position(x, y + 1));
-                        _aiCandidates.Add(new Position(x, y - 1));
-                    }
-                }
-                else
-                {
-                    Debug.Write("Can't hit this position\n");
-                }
-            }
+            _torpedoGameInstance.HitSuggested(_aiPlayer);
             UpdateUI();
         }
 
