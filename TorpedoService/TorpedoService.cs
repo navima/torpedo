@@ -4,15 +4,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NationalInstruments
 {
-    public class TorpedoService
+    public class TorpedoService : IDataStore
     {
         private readonly List<Player> _players = new();
         private EGameState _gameState = EGameState.AddingPlayers;
@@ -26,12 +23,12 @@ namespace NationalInstruments
         private readonly Dictionary<Player, List<Ship>> _unPlacedShips = new();
         private readonly Dictionary<Player, Dictionary<Position, Ship>> _placedShips = new();
         private readonly Dictionary<Player, Dictionary<Position, EHitResult>> _hitResults = new();
-        private readonly DataStore dataStore;
+        private readonly IDataStore dataStore;
         private readonly (int, int) _tableSize;
         public event EventHandler<StateChangedEventArgs>? GameStateChanged;
 
         #region Constructors
-        public TorpedoService(DataStore dataStore, (int, int) tableSize)
+        public TorpedoService(IDataStore dataStore, (int, int) tableSize)
         {
             this.dataStore = dataStore;
             this._tableSize = tableSize;
@@ -53,7 +50,7 @@ namespace NationalInstruments
         public IDictionary<Ship, int> StartingShips => _startingShips;
         public Player? CurrentPlayer { get; private set; }
         public (int, int) TableSize => _tableSize;
-        public Bounds Bounds { get => new Bounds(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
+        public Bounds Bounds { get => new(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
 
         #endregion
 
@@ -61,7 +58,7 @@ namespace NationalInstruments
         {
             if (_gameState != state)
             {
-                throw new IllegalStateException($"State should be {state.ToString()}");
+                throw new IllegalStateException($"State should be {state}");
             }
         }
 
@@ -119,6 +116,17 @@ namespace NationalInstruments
                 return false;
             }
         }
+        public void PlaceShipRandom(Player player, Ship ship)
+        {
+            var random = new Random();
+            Array values = Enum.GetValues(typeof(EOrientation));
+            while (!TryPlaceShip(player, ship, Bounds.GetRandomPoint()))
+            {
+#pragma warning disable CS8605 // Unboxing a possibly null value.
+                ship.Orientation = (EOrientation)values.GetValue(random.Next(values.Length)); // This can never be null, thank you very much.
+#pragma warning restore CS8605 // Unboxing a possibly null value.
+            }
+        }
         public void FinishPlacingShips(Player player)
         {
             EnsureState(EGameState.PlacingShips);
@@ -131,9 +139,8 @@ namespace NationalInstruments
                 }
             }
         }
-        public bool TryHit(Player player, Position position, out EHitResult result)
+        public bool CanHit(Player player, Position position)
         {
-            result = EHitResult.None;
             EnsureState(EGameState.SinkingShips);
             if (CurrentPlayer != player)
             {
@@ -147,8 +154,18 @@ namespace NationalInstruments
             {
                 return false;
             }
+            return true;
+        }
+        public bool TryHit(Player player, Position position, out EHitResult result)
+        {
+            result = EHitResult.None;
+            EnsureState(EGameState.SinkingShips);
+            if (!CanHit(player, position))
+            {
+                return false;
+            }
 
-            Func<IDictionary<Position, Ship>, Position, ShipPart?> findHitPart = (ships, position) =>
+            ShipPart? FindHitPart(IDictionary<Position, Ship> ships, Position position)
             {
                 foreach (var (shipPos, ship) in ships)
                 {
@@ -161,14 +178,14 @@ namespace NationalInstruments
                     }
                 }
                 return null;
-            };
+            }
 
             EHitResult resultLocal = EHitResult.Miss;
             var enemies = Players.Where(x => x != player);
             foreach (var enemy in enemies)
             {
                 var ships = PlacedShips(enemy);
-                var hitPart = findHitPart(ships, position);
+                var hitPart = FindHitPart(ships, position);
 
                 if (hitPart != null)
                 {
@@ -191,6 +208,46 @@ namespace NationalInstruments
             IncrementPlayer();
             result = resultLocal;
             return true;
+        }
+        public EHitResult HitSuggested(Player player)
+        {
+            var previousTries = _hitResults[player];
+            var previousHits = previousTries.Where(x => x.Value > EHitResult.Miss);
+            if (previousHits.Any())
+            {
+                var adjacentPositions = previousHits
+                    .Select(x => x.Key)
+                    .SelectMany(x => new[]
+                        {
+                            x + new Position(1, 0),
+                            x + new Position(-1, 0),
+                            x + new Position(0, 1),
+                            x + new Position(0, -1)
+                        })
+                    .Where(x => CanHit(player, x))
+                    .ToArray();
+                var random = new Random();
+                var position = adjacentPositions[random.Next(adjacentPositions.Length)];
+                var success = TryHit(player, position, out var result);
+                if (success)
+                {
+                    return result;
+                }
+                else
+                {
+                    throw new Exception("This should never happen");
+                }
+            }
+            else
+            {
+                while (true)
+                {
+                    if (TryHit(player, Bounds.GetRandomPoint(), out var result))
+                    {
+                        return result;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -246,6 +303,26 @@ namespace NationalInstruments
         }
         [Pure]
         public T[,] GetBlankBoard<T>() => new T[TableSize.Item1, TableSize.Item2];
+
+        public Player? GetPlayerByName(string name)
+        {
+            return dataStore.GetPlayerByName(name);
+        }
+
+        public Player GetOrCreatePlayerByName(string name)
+        {
+            return dataStore.GetOrCreatePlayerByName(name);
+        }
+
+        public Player CreatePlayer(string name)
+        {
+            return dataStore.CreatePlayer(name);
+        }
+
+        public IEnumerable<Player> GetAllPlayers()
+        {
+            return dataStore.GetAllPlayers();
+        }
     }
 
     [Serializable]
@@ -277,14 +354,7 @@ namespace NationalInstruments
     }
     public static class EHitResultExtensions
     {
-        public static EHitResult Escalate(this EHitResult self, EHitResult target)
-        {
-            if ((short)target > (short)self)
-            {
-                return target;
-            }
-            return self;
-        }
+        public static EHitResult Escalate(this EHitResult self, EHitResult target) => target > self ? target : self;
     }
 
     public readonly struct Position
@@ -297,6 +367,9 @@ namespace NationalInstruments
 
         public int X { get; init; }
         public int Y { get; init; }
+
+        public static Position operator +(Position left, Position right) => new(left.X + right.X, left.Y + right.Y);
+        public static Position operator -(Position left, Position right) => new(left.X - right.X, left.Y - right.Y);
 
         #region Junk
         public override bool Equals(object? obj)
@@ -345,6 +418,14 @@ namespace NationalInstruments
                 && position.Y >= Y
                 && position.X <= Width
                 && position.Y <= Height;
+        }
+
+        public Position GetRandomPoint()
+        {
+            var random = new Random();
+            var x = random.Next(X, X + Width - 1);
+            var y = random.Next(Y, Y + Height - 1);
+            return new Position(x, y);
         }
 
         #region Junk

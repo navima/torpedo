@@ -28,7 +28,7 @@ namespace NationalInstruments
         private bool inCheatMode = false;
         private bool inAIMode = false;
         private bool inPlayerViewMode = false;
-        private DataStore dataStore;
+        private IDataStore dataStore;
         private TorpedoService _torpedoGameInstance;
         private SolidColorBrush cyan = new SolidColorBrush(Colors.Cyan);
         private SolidColorBrush lightgray = new SolidColorBrush(Colors.LightGray);
@@ -674,14 +674,14 @@ namespace NationalInstruments
 
         private void Run()
         {
-            dataStore = new();
+            dataStore = new InMemoryDataStore();
             _torpedoGameInstance = new(dataStore, (9, 9));
             Debug.WriteLine("Initialized service");
             Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
             if (inAIMode)
             {
-                humanPlayer = new Player(label_player1.Text);
-                aiPlayer = new Player(label_player2.Text);
+                humanPlayer = _torpedoGameInstance.GetOrCreatePlayerByName(label_player1.Text);
+                aiPlayer = _torpedoGameInstance.GetOrCreatePlayerByName(label_player2.Text);
                 _torpedoGameInstance.AddPlayer(humanPlayer);
                 _torpedoGameInstance.AddPlayer(aiPlayer);
                 Debug.WriteLine($"Added player {label_player1.Text}");
@@ -689,8 +689,8 @@ namespace NationalInstruments
             }
             else
             {
-                _torpedoGameInstance.AddPlayer(new Player(label_player1.Text));
-                _torpedoGameInstance.AddPlayer(new Player(label_player2.Text));
+                _torpedoGameInstance.AddPlayer(_torpedoGameInstance.GetOrCreatePlayerByName(label_player1.Text));
+                _torpedoGameInstance.AddPlayer(_torpedoGameInstance.GetOrCreatePlayerByName(label_player2.Text));
                 Debug.WriteLine($"Added player {label_player1.Text}");
                 Debug.WriteLine($"Added player {label_player2.Text}");
             }

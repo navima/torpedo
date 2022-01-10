@@ -1,138 +1,35 @@
+// <copyright file="Program.cs" company="University Of Debrecen">
+// Copyright (c) University Of Debrecen. All rights reserved.
+// </copyright>
 
+#pragma warning disable SA1000 // Keywords should be spaced correctly
+#pragma warning disable NI1004 // Do not use string literals in code
+#pragma warning disable CA1303 // Do not pass literals as localized parameters
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+#pragma warning disable CA1305 // Specify IFormatProvider
+
+// This one conflicts with the "static should come first" one.
+#pragma warning disable SA1202 // Elements should be ordered by access
 
 namespace NationalInstruments
 {
     using System;
-    using System.Diagnostics;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
 
     internal class Program
     {
+        public static readonly Regex RxPositionOrientation = new("([A-Z]+)([0-9]+)(UP|DOWN|LEFT|RIGHT)");
+        public static readonly Regex RxPosition = new("([A-Z]+)([0-9]+)");
+
         public static void Main()
         {
             new Program().Run();
         }
 
-        public readonly static Regex rxPositionOrientation = new Regex(@"([a-z]+)([0-9]+)(up|down|left|right)");
-        public readonly static Regex rxPosition = new Regex(@"([a-z]+)([0-9]+)");
-
-        public void Run()
-        {
-            DataStore dataStore = new();
-            TorpedoService _torpedoGameInstance = new(dataStore, (9, 9));
-
-            _torpedoGameInstance.GameStateChanged += TorpedoService_GameStateChanged;
-
-            Console.WriteLine("Initialized service");
-            Action<Player> RequestPlayerPlaceShips = (player) =>
-            {
-                while (_torpedoGameInstance.ShipsToPlace(player).Count() > 0)
-                {
-                    Console.WriteLine("Placing Ships.");
-                    Console.WriteLine("Available ships:");
-                    _torpedoGameInstance.ShipsToPlace(player).ToList().ForEach(ship => Console.WriteLine(ship));
-
-                    Console.WriteLine("Your board:");
-                    printBoard(boardToString(_torpedoGameInstance.GetBoard(player)));
-
-                    var ship = _torpedoGameInstance.ShipsToPlace(player).First();
-                    Console.WriteLine($"Please place your {ship.Size} length ship ([A-Z][0-9][Up|Down|Left|Right])");
-                    Console.WriteLine(new string(' ', Console.WindowWidth));
-                    
-                    if(TryParsePositionOrientation(Console.ReadLine(), out var pos, out var ori))
-                    {
-                        ship.Orientation = ori;
-                        _torpedoGameInstance.TryPlaceShip(player, ship, pos);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Bad format!");
-                    }
-                }
-            };
-            Action<Player> RequestPlayerSinkShip = (player) =>
-            {
-                Console.WriteLine("Your board:");
-                printBoard(boardToString(_torpedoGameInstance.GetBoard(player)));
-                Console.WriteLine("Enemy Board:");
-                printBoard(boardToString(_torpedoGameInstance.GetHitBoard(player)));
-
-                bool success = false;
-                while (!success)
-                {
-                    Console.WriteLine("Please select where to hit ([A-Z][0-9])");
-                    var input = Console.ReadLine();
-                    if (TryParsePosition(input, out var position))
-                    {
-                        success = _torpedoGameInstance.TryHit(player, position, out var res);
-                        if (!success)
-                        {
-                            Console.WriteLine($"Invalid position! {position}");
-                        }
-                        else
-                        {
-                            Console.WriteLine(res);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Bad format!");
-                    }
-                }
-            };
-            while (_torpedoGameInstance.GameState != EGameState.None)
-            {
-                switch (_torpedoGameInstance.GameState)
-                {
-                    case EGameState.AddingPlayers:
-                        {
-                            Console.WriteLine("Adding alice");
-                            _torpedoGameInstance.AddPlayer(new Player("alice"));
-                            Console.WriteLine("Ading bob");
-                            _torpedoGameInstance.AddPlayer(new Player("bob"));
-                            Console.WriteLine("Calling finish adding players");
-                            _torpedoGameInstance.FinishAddingPlayers();
-                        }
-                        break;
-                    case EGameState.PlacingShips:
-                        {
-                            var player = _torpedoGameInstance.CurrentPlayer;
-                            Console.WriteLine($"Current Player: {player}");
-                            RequestPlayerPlaceShips(player);
-                            _torpedoGameInstance.FinishPlacingShips(player);
-                        }
-                        break;
-                    case EGameState.SinkingShips:
-                        {
-                            var player = _torpedoGameInstance.CurrentPlayer;
-                            Console.WriteLine($"Current Player: {player}");
-                            RequestPlayerSinkShip(player);
-                        }
-                        break;
-                    case EGameState.GameOver:
-                        {
-                            Console.WriteLine("Game Over!");
-                            Console.WriteLine("Results:");
-                            Array.ForEach(_torpedoGameInstance.Players.ToArray(), x => Console.WriteLine($"{x.ToString()}: " + (_torpedoGameInstance.IsPlayerDead(x) ? "Lose" : "Win")));
-                            goto Rest;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        Rest:
-            Console.WriteLine("Bye!");
-        }
-
 #nullable enable
-        private void TorpedoService_GameStateChanged(object? sender, StateChangedEventArgs e)
-        {
-            Console.WriteLine("STATE CHANGED: " + e);
-        }
-        private static string[] boardToString(ShipPart?[,] board)
+        private static string[] BoardToString(ShipPart?[,] board)
         {
             string[] rows = new string[board.GetLength(0)];
             for (int i = 0; i < board.GetLength(0); i++)
@@ -148,11 +45,14 @@ namespace NationalInstruments
                         _ => (i + j) % 2 == 1 ? "░░" : "▒▒",
                     });
                 }
+
                 rows[i] = sb.ToString();
             }
+
             return rows;
         }
-        private static string[] boardToString(EHitResult?[,] board)
+
+        private static string[] BoardToString(EHitResult?[,] board)
         {
             string[] rows = new string[board.GetLength(0)];
             for (int i = 0; i < board.GetLength(0); i++)
@@ -169,78 +69,206 @@ namespace NationalInstruments
                         _ => (i + j) % 2 == 1 ? "░░" : "▒▒",
                     });
                 }
+
                 rows[i] = sb.ToString();
             }
+
             return rows;
         }
-        private static void printBoard(string[] board)
+
+#nullable restore
+        private static void PrintBoard(string[] board)
         {
             Console.Write(" ");
             Array.ForEach(Enumerable.Range('A', board.Length).Select(x => ((char)x).ToString().PadRight(2)).ToArray(), Console.Write);
             Console.WriteLine();
             Array.ForEach(board.Select((x, i) => (i + 1).ToString() + x).ToArray(), Console.WriteLine);
         }
+
         private static bool TryParsePosition(string input, out Position output)
         {
-            var matches = rxPosition.Matches(input.ToLower());
+            var matches = RxPosition.Matches(input.ToUpperInvariant());
             if (matches.Count < 1)
             {
-                output = new Position();
+                output = default;
                 return false;
             }
+
             var groups = matches[0].Groups;
-            var inCol = ((short)groups[1].Value[0]) - (short)'a';
+            var inCol = AlphaStringToInt(groups[1].Value);
             var inRow = int.Parse(groups[2].Value) - 1;
 
-            output = new Position(inCol, inRow); ;
+            output = new Position(inCol, inRow);
             return true;
         }
+
         private static bool TryParsePositionOrientation(string input, out Position position, out EOrientation orientation)
         {
-            var matches = rxPositionOrientation.Matches(input.ToLower());
+            var matches = RxPositionOrientation.Matches(input.ToUpperInvariant());
             if (matches.Count < 1)
             {
-                position = new Position();
-                orientation = EOrientation.Up;
+                position = default;
+                orientation = default;
                 return false;
             }
-            var groups = matches[0].Groups;
-            var inCol = ((short)groups[1].Value[0]) - (short)'a';
-            var inRow = int.Parse(groups[2].Value) - 1;
-            var inOri = (EOrientation)Enum.Parse(typeof(EOrientation), groups[3].Value.Capitalize());
 
-            orientation = inOri;
+            var groups = matches[0].Groups;
+            var inCol = AlphaStringToInt(groups[1].Value);
+            var inRow = int.Parse(groups[2].Value) - 1;
+            var inOrientation = (EOrientation)Enum.Parse(typeof(EOrientation), groups[3].Value.CapitalizeInvariant());
+
+            orientation = inOrientation;
             position = new Position(inCol, inRow);
             return true;
         }
-        private int AlphaStringToInt(string value)
+
+        private static int IntPow(int x, uint pow)
         {
-            value = value.Trim().ToLower();
-            int res = 0;
-            for (uint i = (uint)(value.Length - 1); i >= 0; i--)
-            {
-                res += (value[(int)i] - 'a') * IntPow('a' - 'z', i);
-            }
-            return res;
-        }
-        private int IntPow(int x, uint pow)
-        {
-            int ret = 1;
+            int result = 1;
             while (pow != 0)
             {
                 if ((pow & 1) == 1)
-                    ret *= x;
+                {
+                    result *= x;
+                }
+
                 x *= x;
                 pow >>= 1;
             }
-            return ret;
+
+            return result;
         }
-    }
-    public static class Extensions
-    {
-        public static string Capitalize(this String str)
+
+        private static int AlphaStringToInt(string value)
         {
-            return string.Concat(str[0].ToString().ToUpper(), str.AsSpan(1));
+            value = value.Trim().ToUpperInvariant();
+            int res = 0;
+            for (uint i = (uint)(value.Length - 1); i >= 0; i--)
+            {
+                res += (value[(int)i] - 'A') * IntPow('A' - 'Z', i);
+            }
+
+            return res;
+        }
+
+        public void Run()
+        {
+            IDataStore dataStore = new InMemoryDataStore();
+            TorpedoService torpedoGameInstance = new(dataStore, (9, 9));
+
+            torpedoGameInstance.GameStateChanged += this.TorpedoService_GameStateChanged;
+
+            Console.WriteLine("Initialized service");
+            void RequestPlayerPlaceShips(Player player)
+            {
+                while (torpedoGameInstance.ShipsToPlace(player).Any())
+                {
+                    Console.WriteLine("Placing Ships.");
+                    Console.WriteLine("Available ships:");
+                    torpedoGameInstance.ShipsToPlace(player).ToList().ForEach(ship => Console.WriteLine(ship));
+
+                    Console.WriteLine("Your board:");
+                    PrintBoard(BoardToString(torpedoGameInstance.GetBoard(player)));
+
+                    var ship = torpedoGameInstance.ShipsToPlace(player).First();
+                    Console.WriteLine($"Please place your {ship.Size} length ship ([A-Z][0-9][Up|Down|Left|Right])");
+                    Console.WriteLine(new string(' ', Console.WindowWidth));
+
+                    if (TryParsePositionOrientation(Console.ReadLine(), out var pos, out var ori))
+                    {
+                        ship.Orientation = ori;
+                        torpedoGameInstance.TryPlaceShip(player, ship, pos);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Bad format!");
+                    }
+                }
+            }
+
+            void RequestPlayerSinkShip(Player player)
+            {
+                Console.WriteLine("Your board:");
+                PrintBoard(BoardToString(torpedoGameInstance.GetBoard(player)));
+                Console.WriteLine("Enemy Board:");
+                PrintBoard(BoardToString(torpedoGameInstance.GetHitBoard(player)));
+
+                bool success = false;
+                while (!success)
+                {
+                    Console.WriteLine("Please select where to hit ([A-Z][0-9])");
+                    var input = Console.ReadLine();
+                    if (TryParsePosition(input, out var position))
+                    {
+                        success = torpedoGameInstance.TryHit(player, position, out var res);
+                        if (!success)
+                        {
+                            Console.WriteLine($"Invalid position! {position}");
+                        }
+                        else
+                        {
+                            Console.WriteLine(res);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Bad format!");
+                    }
+                }
+            }
+
+            while (torpedoGameInstance.GameState != EGameState.None)
+            {
+                switch (torpedoGameInstance.GameState)
+                {
+                    case EGameState.AddingPlayers:
+                        {
+                            Console.WriteLine("Adding alice");
+                            torpedoGameInstance.AddPlayer(new Player("alice"));
+                            Console.WriteLine("Ading bob");
+                            torpedoGameInstance.AddPlayer(new Player("bob"));
+                            Console.WriteLine("Calling finish adding players");
+                            torpedoGameInstance.FinishAddingPlayers();
+                        }
+
+                        break;
+                    case EGameState.PlacingShips:
+                        {
+                            var player = torpedoGameInstance.CurrentPlayer;
+                            Console.WriteLine($"Current Player: {player}");
+                            RequestPlayerPlaceShips(player);
+                            torpedoGameInstance.FinishPlacingShips(player);
+                        }
+
+                        break;
+                    case EGameState.SinkingShips:
+                        {
+                            var player = torpedoGameInstance.CurrentPlayer;
+                            Console.WriteLine($"Current Player: {player}");
+                            RequestPlayerSinkShip(player);
+                        }
+
+                        break;
+                    case EGameState.GameOver:
+                        {
+                            Console.WriteLine("Game Over!");
+                            Console.WriteLine("Results:");
+                            Array.ForEach(torpedoGameInstance.Players.ToArray(), x => Console.WriteLine($"{x}: " + (torpedoGameInstance.IsPlayerDead(x) ? "Lose" : "Win")));
+                            goto Rest;
+                        }
+
+                    default:
+                        break;
+                }
+            }
+
+        Rest:
+            Console.WriteLine("Bye!");
+        }
+
+        private void TorpedoService_GameStateChanged(object sender, StateChangedEventArgs e)
+        {
+            Console.WriteLine("STATE CHANGED: " + e);
         }
     }
 }
