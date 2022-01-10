@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Please enter your name" Height="147" Width="203"
         ResizeMode="NoResize"
-        Closing="closingEvent">
+        Closing="ClosingEvent">
     
     <Grid Height="130" VerticalAlignment="Top">
         <Button Content="Submit" HorizontalAlignment="Left" Height="21" Margin="59,63,0,0" VerticalAlignment="Top" Width="73" Click="SubmitClicked"/>

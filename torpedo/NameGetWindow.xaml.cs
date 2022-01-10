@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,26 +13,28 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Text.RegularExpressions;
-using System.ComponentModel;
-
 
 namespace NationalInstruments
 {
     /// <summary>
     /// Interaction logic for NameGetWindow.xaml
     /// </summary>
-    /// 
+    ///
     public partial class NameGetWindow : Window
     {
 
-        public string playername = "";
+        private string _playerName = string.Empty;
+        public string GetPlayername()
+        {
+            return _playerName;
+        }
+
         public NameGetWindow()
         {
             InitializeComponent();
         }
 
-        public bool checkName(string name)
+        public bool CheckName(string name)
         {
             var reg = new Regex("^[a-zA-Z0-9]*$");
             if (!(reg.IsMatch(name)))
@@ -53,21 +57,20 @@ namespace NationalInstruments
 
         private void SubmitClicked (object sender, RoutedEventArgs e)
         {
-            if (checkName(InputBox.Text))
+            if (CheckName(InputBox.Text))
             {
-                playername = InputBox.Text.ToString();
+                _playerName = InputBox.Text;
                 this.Close();
             }
         }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-
         }
 
-        private void closingEvent(object sender, CancelEventArgs e)
+        private void ClosingEvent(object sender, CancelEventArgs e)
         {
-            if (playername == "")
+            if (_playerName == string.Empty)
             {
                 e.Cancel = true;
             }

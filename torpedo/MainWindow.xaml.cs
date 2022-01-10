@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,16 +13,13 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Diagnostics;
 
 namespace NationalInstruments
 {
-
     public partial class MainWindow : Window
     {
-
-        private char OpenedPage = 'N';
-        private GridPage page = null;
+        private char _openedPage = 'N';
+        private GridPage? _page = null;
 
         public MainWindow()
         {
@@ -30,25 +28,25 @@ namespace NationalInstruments
 
         private void WindowKeyPressed(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.C && OpenedPage == 'O')
+            if (e.Key == Key.C && _openedPage == 'O')
             {
-                page.CheatMode();
+                _page.CheatMode();
             }
 
-            if (e.Key == Key.P && OpenedPage == 'O')
+            if (e.Key == Key.P && _openedPage == 'O')
             {
-                page.PlayerViewMode();
+                _page.PlayerViewMode();
             }
         }
 
         private void GameClicked1(object sender, RoutedEventArgs e)
         {
             var w = new NameGetWindow();
-            if(w.ShowDialog() == false)
+            if (w.ShowDialog() == false)
             {
-                page = new GridPage(w.playername, "AI");
-                Main.Content = page;
-                OpenedPage = 'O';
+                _page = new GridPage(w.GetPlayername(), "AI");
+                Main.Content = _page;
+                _openedPage = 'O';
             }
         }
 
@@ -57,15 +55,15 @@ namespace NationalInstruments
             var w = new NameGetWindow2();
             if (w.ShowDialog() == false)
             {
-                Main.Content = new GridPage(w.playername1,w.playername2);
-                OpenedPage = 'T';
+                Main.Content = new GridPage(w.GetPlayername1(), w.GetPlayername2());
+                _openedPage = 'T';
             }
         }
 
         private void ScoreClicked(object sender, RoutedEventArgs e)
         {
-            // Main.Content = new scorepage();
-            OpenedPage = 'S';
+            Main.Content = new ScorePage();
+            _openedPage = 'S';
         }
         private void CloseApplication(object sender, RoutedEventArgs e)
         {

@@ -8,10 +8,9 @@ using System.Windows.Controls;
 
 namespace NationalInstruments
 {
-    class TorpedoButton : Button
+    internal class TorpedoButton : Button
     {
         private int _x_coord;
-        
         public int GetX_coord()
         {
             return _x_coord;

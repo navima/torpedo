@@ -22,14 +22,22 @@ namespace NationalInstruments
     /// </summary>
     public partial class NameGetWindow2 : Window
     {
+        private string _playername1 = string.Empty;
+        public string GetPlayername1()
+        {
+            return _playername1;
+        }
 
-        public string playername1 = "";
-        public string playername2 = "";
+        private string _playername2 = string.Empty;
+        public string GetPlayername2()
+        {
+            return _playername2;
+        }
         public NameGetWindow2()
         {
             InitializeComponent();
         }
-        public bool checkName(string name)
+        public bool CheckName(string name)
         {
             var reg = new Regex("^[a-zA-Z0-9]*$");
             if (!(reg.IsMatch(name)))
@@ -51,22 +59,20 @@ namespace NationalInstruments
         }
         private void SubmitClicked(object sender, RoutedEventArgs e)
         {
-
-            if(checkName(InputBox.Text) && checkName(InputBox2.Text))
+            if (CheckName(InputBox.Text) && CheckName(InputBox2.Text))
             {
-                playername1 = InputBox.Text.ToString();
-                playername2 = InputBox2.Text.ToString();
+                _playername1 = InputBox.Text;
+                _playername2 = InputBox2.Text;
                 this.Close();
             }
         }
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-
         }
 
-        private void closingEvent(object sender, CancelEventArgs e)
+        private void ClosingEvent(object sender, CancelEventArgs e)
         {
-            if (playername1 == "" || playername2 == "")
+            if (_playername1 == string.Empty || _playername2 == string.Empty)
             {
                 e.Cancel = true;
             }

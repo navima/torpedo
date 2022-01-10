@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "torpedo", "torpedo\torpedo.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "torpedoTesterConsoleApp", "torpedoTesterConsoleApp\torpedoTesterConsoleApp.csproj", "{5B879CA9-F4B0-4169-BCC0-393263038AF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TorpedoService", "TorpedoService\TorpedoService.csproj", "{085259BF-65BC-46D7-8F8B-A2FE7F37D4D0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TorpedoService", "TorpedoService\TorpedoService.csproj", "{085259BF-65BC-46D7-8F8B-A2FE7F37D4D0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

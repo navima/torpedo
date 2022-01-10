@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NationalInstruments
 {
-    class PlayerStats
+    internal class PlayerStats
     {
         private int _sunken_ships = 0;
         public int GetSunken_Ships()
@@ -38,22 +38,20 @@ namespace NationalInstruments
             _misses++;
         }
 
-        private string[] _shipstatus = new string[] { "Not placed yet", "Not placed yet", "Not placed yet", "Not placed yet" };
+        private readonly string[] _shipStatus = new string[] { "Not placed yet", "Not placed yet", "Not placed yet", "Not placed yet" };
 
         public string[] GetShipStatus()
         {
-            return _shipstatus;
+            return _shipStatus;
         }
 
         public string GetShipStatusItem(int n)
         {
-            return _shipstatus[n];
+            return _shipStatus[n];
         }
         public void SetShipStatus(int n, string s)
         {
-            _shipstatus[n] = s;
+            _shipStatus[n] = s;
         }
-
-
     }
 }
