@@ -15,6 +15,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
+#pragma warning disable CA1305 // Specify IFormatProvider
+
 namespace NationalInstruments
 {
     /// <summary>
@@ -22,7 +24,7 @@ namespace NationalInstruments
     /// </summary>
     public partial class GridPage : Page
     {
-        private char[] _letters = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I' };
+        private const string _letters = "ABCDEFGHI";
         private int _time = 0;
         private int _turns = 1;
 
@@ -35,9 +37,8 @@ namespace NationalInstruments
         private TorpedoButton? _selectedButton;
         private Player? _humanPlayer;
         private Player? _aiPlayer;
-        private readonly List<Position> _aiCandidates = new ();
         private Player? _winner;
-        private Dictionary<string, PlayerStats> _playerStats = new ();
+        private readonly Dictionary<string, PlayerStats> _playerStats = new ();
         private readonly TorpedoButton[,] _buttonArray = new TorpedoButton[9, 9];
 
         private readonly SolidColorBrush _cyan = new (Colors.Cyan);
@@ -80,7 +81,7 @@ namespace NationalInstruments
             }
             for (int i = 1; i < 10; i++)
             {
-                TextBlock tb = new TextBlock();
+                TextBlock tb = new();
 
                 tb.Text = i.ToString();
                 tb.FontSize = 23;
@@ -92,7 +93,7 @@ namespace NationalInstruments
 
                 table.Children.Add(tb);
 
-                tb = new TextBlock();
+                tb = new();
 
                 tb.Text = _letters[i - 1].ToString();
                 tb.FontSize = 23;
@@ -148,7 +149,7 @@ namespace NationalInstruments
         private string CreateLabelText() => _torpedoGameInstance.GameState switch
         {
             EGameState.PlacingShips => $"Placing ships, {_torpedoGameInstance.CurrentPlayer}'s turn",
-            EGameState.SinkingShips => $"Turn {_turns}, {_torpedoGameInstance.CurrentPlayer}'s turn",
+            EGameState.SinkingShips => $"Turn {_torpedoGameInstance.Rounds}, {_torpedoGameInstance.CurrentPlayer}'s turn",
             EGameState.GameOver => $"Game over, {_winner.Name} won",
             _ => string.Empty
         };
@@ -483,7 +484,7 @@ namespace NationalInstruments
         {
             Player player = _torpedoGameInstance.CurrentPlayer;
             Debug.Write($"{_torpedoGameInstance.CurrentPlayer} is trying to hit position {x}:{y}. ");
-            bool success = _torpedoGameInstance.TryHit(player, new Position(x, y), out var res);
+            _torpedoGameInstance.TryHit(player, new Position(x, y), out var res);
             Debug.Write($"{res} \n");
             switch (res)
             {
@@ -502,14 +503,6 @@ namespace NationalInstruments
                 if (_inAIMode)
                 {
                     AI_shoot();
-                    _turns++;
-                }
-                else
-                {
-                    if (_torpedoGameInstance.CurrentPlayer == _torpedoGameInstance.Players.First())
-                    {
-                        _turns++;
-                    }
                 }
             }
             else
@@ -579,13 +572,13 @@ namespace NationalInstruments
         #region _timer
         private void StartTimer()
         {
-            DispatcherTimer dispatcherTimer = new DispatcherTimer();
+            DispatcherTimer dispatcherTimer = new();
             dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
             dispatcherTimer.Tick += IncrementTime;
             dispatcherTimer.Start();
         }
 
-        private void IncrementTime(object sender, EventArgs e)
+        private void IncrementTime(object? sender, EventArgs e)
         {
             if (_torpedoGameInstance.GameState != EGameState.GameOver)
             {
