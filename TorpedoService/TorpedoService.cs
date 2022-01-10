@@ -78,7 +78,7 @@ namespace NationalInstruments
                 _placedShips.Add(player, new Dictionary<Position, Ship>());
                 _hitResults.Add(player, new Dictionary<Position, EHitResult>());
             }
-
+            _players.Shuffle();
             IncrementPlayer();
             GameState = EGameState.PlacingShips;
         }
@@ -137,6 +137,7 @@ namespace NationalInstruments
                 var wraparound = IncrementPlayer();
                 if (wraparound)
                 {
+
                     Rounds = 1;
                     GameState = EGameState.SinkingShips;
                 }
@@ -369,6 +370,36 @@ namespace NationalInstruments
     public static class EHitResultExtensions
     {
         public static EHitResult Escalate(this EHitResult self, EHitResult target) => target > self ? target : self;
+    }
+
+    public static class IListExtensions
+    {
+
+        private static Random _random = new();
+        /// <summary>
+        /// <para>
+        /// Shuffles the List in-place using the Fisher-Yates algorithm.
+        /// </para>
+        /// <para>
+        /// <see href="https://en.wikipedia.org/wiki/Fisher–Yates_shuffle"/>
+        /// </para>
+        /// <para>
+        /// <seealso href="https://stackoverflow.com/a/1262619/9281022"/>
+        /// </para>
+        /// </summary>
+        /// <param name="list">this</param>
+        public static void Shuffle<T>(this IList<T> list)
+        {
+            int n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = _random.Next(n + 1);
+                T value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+        }
     }
 
     public readonly struct Position
