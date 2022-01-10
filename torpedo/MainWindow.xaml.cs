@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -42,7 +42,7 @@ namespace NationalInstruments
         private void GameClicked1(object sender, RoutedEventArgs e)
         {
             var w = new NameGetWindow();
-            if (w.ShowDialog() == false)
+            if (w.ShowDialog() ?? false)
             {
                 _page = new GridPage(w.GetPlayername(), "AI");
                 Main.Content = _page;
