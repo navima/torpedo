@@ -38,7 +38,7 @@ namespace NationalInstruments
         private Player? _humanPlayer;
         private Player _aiPlayer;
         private Player? _winner;
-        private readonly Dictionary<string, PlayerStats> _playerStats = new ();
+        private readonly Dictionary<Player, PlayerStats> _playerStats = new ();
         private readonly TorpedoButton[,] _buttonArray = new TorpedoButton[9, 9];
 
         private readonly SolidColorBrush _cyan = new (Colors.Cyan);
@@ -165,10 +165,10 @@ namespace NationalInstruments
             {
                 tb = Player2Status;
             }
-            int sunken_ships = _playerStats[player.Name].SunkenShips;
-            int hits = _playerStats[player.Name].Hits;
-            int misses = _playerStats[player.Name].Misses;
-            var shipStatus = _playerStats[player.Name].GetShipStatuses();
+            int sunken_ships = _playerStats[player].SunkenShips;
+            int hits = _playerStats[player].Hits;
+            int misses = _playerStats[player].Misses;
+            var shipStatus = _playerStats[player].GetShipStatuses();
             StringBuilder sb = new();
             sb.AppendLine($"Sunken ships: {sunken_ships}");
             sb.AppendLine($"Hits: {hits}");
@@ -202,8 +202,7 @@ namespace NationalInstruments
             {
                 if (x.Value.Dead)
                 {
-                    Debug.WriteLine($"Ship-{x.Value.Size - 1} sunk");
-                    _playerStats[player.Name].SetShipStatus(x.Value, EShipStatus.Dead);
+                    _playerStats[player].SetShipStatus(x.Value, EShipStatus.Dead);
                 }
             });
         }
@@ -364,8 +363,10 @@ namespace NationalInstruments
             _torpedoGameInstance.FinishAddingPlayers();
             Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
             Debug.WriteLine($"Current ship to palce is: {_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
-            _playerStats.Add(label_player1.Text, new PlayerStats());
-            _playerStats.Add(label_player2.Text, new PlayerStats());
+            _torpedoGameInstance.GetAllPlayers().ToList().ForEach(player =>
+            {
+                _playerStats.Add(player, new PlayerStats());
+            });
             UpdateUI();
             MoveState();
         }
@@ -450,7 +451,7 @@ namespace NationalInstruments
         {
             if (_torpedoGameInstance.TryPlaceShip(player, ship, position))
             {
-                _playerStats[player.Name].SetShipStatus(ship, EShipStatus.Placed);
+                _playerStats[player].SetShipStatus(ship, EShipStatus.Placed);
                 if (ship.Size == 4)
                 {
                     Debug.WriteLine("Last ship placed");
@@ -478,7 +479,7 @@ namespace NationalInstruments
                 var ship = _torpedoGameInstance.ShipsToPlace(_aiPlayer).First();
                 Debug.WriteLine($"Current ship to place is {ship.Size}");
                 _torpedoGameInstance.PlaceShipRandom(_aiPlayer, ship);
-                _playerStats[_aiPlayer.Name].SetShipStatus(ship, EShipStatus.Placed);
+                _playerStats[_aiPlayer].SetShipStatus(ship, EShipStatus.Placed);
             }
             _torpedoGameInstance.FinishPlacingShips(_aiPlayer);
         }
@@ -492,13 +493,13 @@ namespace NationalInstruments
             switch (res)
             {
                 case EHitResult.Sink:
-                    _playerStats[player.Name].IncrementSunkenShips();
+                    _playerStats[player].IncrementSunkenShips();
                     break;
                 case EHitResult.Hit:
-                    _playerStats[player.Name].IncrementHits();
+                    _playerStats[player].IncrementHits();
                     break;
                 default:
-                    _playerStats[player.Name].IncrementMisses();
+                    _playerStats[player].IncrementMisses();
                     break;
             }
             if (_torpedoGameInstance.GameState != EGameState.GameOver)
@@ -527,13 +528,13 @@ namespace NationalInstruments
             switch (res)
             {
                 case EHitResult.Sink:
-                    _playerStats[_aiPlayer.Name].IncrementSunkenShips();
+                    _playerStats[_aiPlayer].IncrementSunkenShips();
                     break;
                 case EHitResult.Hit:
-                    _playerStats[_aiPlayer.Name].IncrementHits();
+                    _playerStats[_aiPlayer].IncrementHits();
                     break;
                 default:
-                    _playerStats[_aiPlayer.Name].IncrementMisses();
+                    _playerStats[_aiPlayer].IncrementMisses();
                     break;
             }
         }
@@ -546,9 +547,9 @@ namespace NationalInstruments
                 if (_torpedoGameInstance.IsPlayerDead(x))
                 {
                     Debug.WriteLine($"Player {x.Name} lost");
-                    foreach (var (ship, _) in _playerStats[x.Name].GetShipStatuses())
+                    foreach (var (ship, _) in _playerStats[x].GetShipStatuses())
                     {
-                        _playerStats[x.Name].SetShipStatus(ship, EShipStatus.Dead);
+                        _playerStats[x].SetShipStatus(ship, EShipStatus.Dead);
                     }
                 }
                 else
@@ -558,6 +559,7 @@ namespace NationalInstruments
                     UpdatePlaying(_torpedoGameInstance.GetHitBoard(x));
                 }
             });
+            //_dataStore.AddOutcome(new Outcome(_torpedoGameInstance.GetAllPlayers(), _playerStats, _winner, _torpedoGameInstance.Rounds));
         }
 
         private void MoveState()

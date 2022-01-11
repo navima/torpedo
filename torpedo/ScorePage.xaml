@@ -9,7 +9,16 @@
       Title="ScorePage">
 
     <Grid>
-        <DataGrid x:Name="Datagrid" HorizontalAlignment="Left" Height="420" VerticalAlignment="Top" Width="800" d:ItemsSource="{d:SampleData ItemCount=5}"/>
+        <DataGrid x:Name="Datagrid" HorizontalAlignment="Left" Height="420" VerticalAlignment="Top" Width="800">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Player 1" Width="1*"/>
+                <DataGridTextColumn Header="Player 2" Width="1*"/>
+                <DataGridTextColumn Header="Rounds" Width="1*"/>
+                <DataGridTextColumn Header="Player1 Hits" Width="1*"/>
+                <DataGridTextColumn Header="Player2 Hits" Width="1*"/>
+                <DataGridTextColumn Header="Winner" Width="1*"/>
+            </DataGrid.Columns>
+        </DataGrid>
 
     </Grid>
 </Page>
