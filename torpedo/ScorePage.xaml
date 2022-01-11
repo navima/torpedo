@@ -9,7 +9,7 @@
       Title="ScorePage">
 
     <Grid>
-        <DataGrid HorizontalAlignment="Left" Height="420" VerticalAlignment="Top" Width="800" d:ItemsSource="{d:SampleData ItemCount=5}"/>
+        <DataGrid x:Name="Datagrid" HorizontalAlignment="Left" Height="420" VerticalAlignment="Top" Width="800" d:ItemsSource="{d:SampleData ItemCount=5}"/>
 
     </Grid>
 </Page>

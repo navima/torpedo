@@ -367,6 +367,7 @@ namespace NationalInstruments
             _playerStats.Add(label_player1.Text, new PlayerStats());
             _playerStats.Add(label_player2.Text, new PlayerStats());
             UpdateUI();
+            MoveState();
         }
 
         private void ButtonPress(int x, int y)
@@ -480,7 +481,6 @@ namespace NationalInstruments
                 _playerStats[_aiPlayer.Name].SetShipStatus(ship, EShipStatus.Placed);
             }
             _torpedoGameInstance.FinishPlacingShips(_aiPlayer);
-            UpdateUI();
         }
 
         private void Shoot(int x, int y)
@@ -506,6 +506,11 @@ namespace NationalInstruments
                 if (_inAIMode)
                 {
                     AI_shoot();
+                    if(_torpedoGameInstance.GameState == EGameState.GameOver)
+                    {
+                        Debug.WriteLine("Game is finished");
+                        FinishGame();
+                    }
                 }
             }
             else
@@ -517,8 +522,20 @@ namespace NationalInstruments
 
         private void AI_shoot()
         {
-            _torpedoGameInstance.HitSuggested(_aiPlayer);
-            UpdateUI();
+            EHitResult res = _torpedoGameInstance.HitSuggested(_aiPlayer);
+            Debug.WriteLine($"AI result: {res}");
+            switch (res)
+            {
+                case EHitResult.Sink:
+                    _playerStats[_aiPlayer.Name].IncrementSunkenShips();
+                    break;
+                case EHitResult.Hit:
+                    _playerStats[_aiPlayer.Name].IncrementHits();
+                    break;
+                default:
+                    _playerStats[_aiPlayer.Name].IncrementMisses();
+                    break;
+            }
         }
 
         public void FinishGame()
@@ -547,10 +564,11 @@ namespace NationalInstruments
         {
             if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
             {
-                if (_inAIMode)
+                if (_inAIMode && _torpedoGameInstance.CurrentPlayer == _aiPlayer)
                 {
                     Debug.WriteLine("AI is placing ships");
                     AI_place();
+                    UpdateUI();
                 }
                 else
                 {
@@ -562,6 +580,10 @@ namespace NationalInstruments
             {
                 Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
                 StartTimer();
+                if (_torpedoGameInstance.CurrentPlayer == _aiPlayer)
+                {
+                    AI_shoot();
+                }
             }
             if (_torpedoGameInstance.GameState == EGameState.GameOver)
             {
