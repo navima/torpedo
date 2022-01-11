@@ -356,14 +356,16 @@ namespace NationalInstruments
             else
             {
                 _torpedoGameInstance.AddPlayer(_torpedoGameInstance.GetOrCreatePlayerByName(label_player1.Text));
+                Debug.WriteLine($"Added player with name {label_player1.Text}");
                 _torpedoGameInstance.AddPlayer(_torpedoGameInstance.GetOrCreatePlayerByName(label_player2.Text));
+                Debug.WriteLine($"Added player with name {label_player2.Text}");
                 Debug.WriteLine($"Added player {label_player1.Text}");
                 Debug.WriteLine($"Added player {label_player2.Text}");
             }
             _torpedoGameInstance.FinishAddingPlayers();
             Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
-            Debug.WriteLine($"Current ship to palce is: {_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
-            _torpedoGameInstance.GetAllPlayers().ToList().ForEach(player =>
+            Debug.WriteLine($"Current ship to palce is: Ship-{_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
+            _torpedoGameInstance.Players.ToList().ForEach(player =>
             {
                 _playerStats.Add(player, new PlayerStats());
             });
@@ -559,7 +561,7 @@ namespace NationalInstruments
                     UpdatePlaying(_torpedoGameInstance.GetHitBoard(x));
                 }
             });
-            //_dataStore.AddOutcome(new Outcome(_torpedoGameInstance.GetAllPlayers(), _playerStats, _winner, _torpedoGameInstance.Rounds));
+            _dataStore.AddOutcome(new Outcome(_torpedoGameInstance.Players, ConvertStats(_playerStats), _winner, _torpedoGameInstance.Rounds));
         }
 
         private void MoveState()
@@ -596,6 +598,25 @@ namespace NationalInstruments
 
         #endregion
 
+        private Dictionary<Player, PlayerStat> ConvertStats(Dictionary<Player, PlayerStats> stats)
+        {
+            Dictionary<Player,PlayerStat> dict = new Dictionary<Player, PlayerStat>();
+            Player player1 = stats.Keys.ToArray()[0];
+            Player player2 = stats.Keys.ToArray()[1];
+            
+            int player1Survive = 10 - (stats[player2].Hits + stats[player2].SunkenShips);
+            int player2Survive = 10 - (stats[player1].Hits + stats[player1].SunkenShips);
+            
+            dict.Add(player1, new PlayerStat(stats[player1].Hits + stats[player1].SunkenShips, stats[player1].Misses, player1Survive));
+            dict.Add(player2, new PlayerStat(stats[player2].Hits + stats[player2].SunkenShips, stats[player2].Misses, player2Survive));
+
+            dict.Keys.ToList().ForEach(player => {
+                Debug.WriteLine($"{player.Name}'s stats are. {dict[player].Hits} hits. {dict[player].Misses} misses. {dict[player].SurvivingShipParts} surviving parts.");
+            });
+
+            return dict;
+        }
+
         #region _timer
         private void StartTimer()
         {
@@ -628,8 +649,6 @@ namespace NationalInstruments
             InitializeComponent();
             _dataStore = dataStore;
             _torpedoGameInstance = new TorpedoService(_dataStore, (9, 9));
-            _aiPlayer = _dataStore.GetOrCreatePlayerByName("AI");
-            _humanPlayer = _dataStore.GetOrCreatePlayerByName(player1);
             _inAIMode = player2 == "AI";
             InitializeGridPage(player1, player2);
             StartGame();
