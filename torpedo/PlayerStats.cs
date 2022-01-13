@@ -11,7 +11,7 @@ namespace NationalInstruments
         public int Misses { get; private set; }
         public void IncrementMisses() => Misses++;
 
-        private readonly Dictionary<Ship, EShipStatus> _shipStatus = new();
+        private readonly Dictionary<Ship, EShipStatus> _shipStatus = new ();
         public Dictionary<Ship, EShipStatus> GetShipStatuses() => _shipStatus;
         public EShipStatus GetShipStatus(Ship ship) => _shipStatus[ship];
         public void SetShipStatus(Ship ship, EShipStatus status) => _shipStatus[ship] = status;

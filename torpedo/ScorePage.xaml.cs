@@ -28,7 +28,7 @@ namespace NationalInstruments
             InitializeComponent();
             _dataStore = dataStore;
             List<Outcome> outcomes = dataStore.GetAllOutcomes().ToList();
-            Debug.WriteLine($"Number of games in dataStore: {outcomes.Count()}");
+            Debug.WriteLine($"Number of games in dataStore: {outcomes.Count}");
 
             outcomes.ForEach(outcome =>
             {
@@ -40,6 +40,7 @@ namespace NationalInstruments
                 stats._score_winner = outcome.Winner.Name;
                 stats._score_p1Hits = outcome.PlayerStats[outcome.Players.ToArray()[0]].Hits;
                 stats._score_p2Hits = outcome.PlayerStats[outcome.Players.ToArray()[1]].Hits;
+                Sort(stats);
                 Datagrid.Items.Add(stats);
             });
         }
@@ -52,16 +53,15 @@ namespace NationalInstruments
             public int _score_p1Hits { get; set; }
             public int _score_p2Hits { get; set; }
             public string _score_winner { get; set; }
-            /*
-            public ScoreStats(string player1, string player2, int scoreRounds, int p1Hits, int p2Hits, string winner)
+        }
+
+        private void Sort(ScoreStats stats)
+        {
+            if(stats._score_player2 == "Player1" || stats._score_player1 == "AI")
             {
-                _score_player1 = player1;
-                _score_player2 = player2;
-                _score_rounds = scoreRounds;
-                _score_p1Hits = p1Hits;
-                _score_p2Hits = p2Hits;
-                _score_winner = winner;
-            }*/
+                (stats._score_player1, stats._score_player2) = (stats._score_player2, stats._score_player1);
+                (stats._score_p1Hits, stats._score_p2Hits) = (stats._score_p2Hits, stats._score_p1Hits);
+            }
         }
     }
 }

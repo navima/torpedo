@@ -10,27 +10,27 @@ namespace NationalInstruments
 {
     internal class TorpedoButton : Button
     {
-        private int _x_coord;
-        public int GetX_coord()
+        private int _xCoordinate;
+        public int GetXCoordinate()
         {
-            return _x_coord;
+            return _xCoordinate;
         }
 
-        public void SetX_coord(int x_coord)
+        public void SetXCoordinate(int xCoordinate)
         {
-             _x_coord = x_coord;
+             _xCoordinate = xCoordinate;
         }
 
-        private int _y_coord;
+        private int _yCoordinate;
 
-        public int GetY_coord()
+        public int GetYCoordinate()
         {
-            return _y_coord;
+            return _yCoordinate;
         }
 
-        public void SetY_coord(int y_coord)
+        public void SetYCoordinate(int yCoordinate)
         {
-            _y_coord = y_coord;
+            _yCoordinate = yCoordinate;
         }
     }
 }

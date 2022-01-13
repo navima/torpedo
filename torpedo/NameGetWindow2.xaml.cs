@@ -32,14 +32,14 @@ namespace NationalInstruments
         public bool CheckName(string name) => Validation.ValidateName(name);
         private void SubmitClicked(object sender, RoutedEventArgs e)
         {
-            if (CheckName(InputBox.Text) && CheckName(InputBox2.Text))
+            if (CheckName(InputBox.Text) && CheckName(InputBox2.Text) && InputBox.Text != InputBox2.Text)
             {
                 DialogResult = true;
                 this.Close();
             }
             else
             {
-                MessageBox.Show("Name can only contain letters and numbers, and must be between 3 and 9 characters");
+                MessageBox.Show("Name can only contain letters and numbers, and must be between 3 and 9 characters, and two players can't have the same names");
             }
         }
     }

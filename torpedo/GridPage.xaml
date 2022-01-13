@@ -11,7 +11,7 @@
 
     <Grid>
         <TextBlock x:Name="turnlabel" Text="Player1's turn" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,9,0,0" Height="32" Width="343" FontSize="20" TextAlignment="Center" TextWrapping="Wrap"/>
-        <Grid x:Name="table" Width="220" Height="220" HorizontalAlignment="Center" Margin="0,142,0,58" Background="Gray" ShowGridLines="True" >
+        <Grid x:Name="table" Width="220" Height="220" HorizontalAlignment="Center" Margin="0,142,0,58" Background="Gray">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="10*"/>
                 <ColumnDefinition Width="10*"/>

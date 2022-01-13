@@ -62,14 +62,14 @@ namespace NationalInstruments
 
                     button.Content = "O";
 
-                    button.SetX_coord(i - 1);
-                    button.SetY_coord(j - 1);
+                    button.SetXCoordinate(i - 1);
+                    button.SetYCoordinate(j - 1);
 
                     button.Background = _lightGray;
 
                     button.Click += (sender, e) =>
                     {
-                        ButtonPress(button.GetX_coord(), button.GetY_coord());
+                        ButtonPress(button.GetXCoordinate(), button.GetYCoordinate());
                     };
 
                     Grid.SetColumn(button, i);
@@ -393,7 +393,7 @@ namespace NationalInstruments
             Position position;
             if (ship.Size == 1)
             {
-                position = new Position(button.GetX_coord(), button.GetY_coord());
+                position = new Position(button.GetXCoordinate(), button.GetYCoordinate());
                 ship.Orientation = EOrientation.Up;
                 PlaceShip(player, ship, position);
             }
@@ -406,38 +406,38 @@ namespace NationalInstruments
             else if (_selectedButton == null)
             {
                 _selectedButton = button;
-                Debug.WriteLine($"First location selected as {button.GetX_coord()}:{button.GetY_coord()}");
+                Debug.WriteLine($"First location selected as {button.GetXCoordinate()}:{button.GetYCoordinate()}");
                 _selectedButton.Background = _cyan;
             }
             else
             {
-                Debug.WriteLine($"Second location selected as {button.GetX_coord()}:{button.GetY_coord()}");
-                if (_selectedButton.GetX_coord() + 1 == button.GetX_coord() && _selectedButton.GetY_coord() == button.GetY_coord())
+                Debug.WriteLine($"Second location selected as {button.GetXCoordinate()}:{button.GetYCoordinate()}");
+                if (_selectedButton.GetXCoordinate() + 1 == button.GetXCoordinate() && _selectedButton.GetYCoordinate() == button.GetYCoordinate())
                 {
                     Debug.WriteLine("Second location is right to the first location");
                     ship.Orientation = EOrientation.Right;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.GetXCoordinate(), _selectedButton.GetYCoordinate());
                     PlaceShip(player, ship, position);
                 }
-                else if (_selectedButton.GetX_coord() - 1 == button.GetX_coord() && _selectedButton.GetY_coord() == button.GetY_coord())
+                else if (_selectedButton.GetXCoordinate() - 1 == button.GetXCoordinate() && _selectedButton.GetYCoordinate() == button.GetYCoordinate())
                 {
                     Debug.WriteLine("Second location is left to the first location");
                     ship.Orientation = EOrientation.Left;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.GetXCoordinate(), _selectedButton.GetYCoordinate());
                     PlaceShip(player, ship, position);
                 }
-                else if (_selectedButton.GetY_coord() - 1 == button.GetY_coord() && _selectedButton.GetX_coord() == button.GetX_coord())
+                else if (_selectedButton.GetYCoordinate() - 1 == button.GetYCoordinate() && _selectedButton.GetXCoordinate() == button.GetXCoordinate())
                 {
                     Debug.WriteLine("Second location is above the first location");
                     ship.Orientation = EOrientation.Up;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.GetXCoordinate(), _selectedButton.GetYCoordinate());
                     PlaceShip(player, ship, position);
                 }
-                else if (_selectedButton.GetY_coord() + 1 == button.GetY_coord() && _selectedButton.GetX_coord() == button.GetX_coord())
+                else if (_selectedButton.GetYCoordinate() + 1 == button.GetYCoordinate() && _selectedButton.GetXCoordinate() == button.GetXCoordinate())
                 {
                     Debug.WriteLine("Second location is below the first location");
                     ship.Orientation = EOrientation.Down;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.GetXCoordinate(), _selectedButton.GetYCoordinate());
                     PlaceShip(player, ship, position);
                 }
                 else
@@ -603,10 +603,8 @@ namespace NationalInstruments
             Dictionary<Player,PlayerStat> dict = new Dictionary<Player, PlayerStat>();
             Player player1 = stats.Keys.ToArray()[0];
             Player player2 = stats.Keys.ToArray()[1];
-            
             int player1Survive = 10 - (stats[player2].Hits + stats[player2].SunkenShips);
             int player2Survive = 10 - (stats[player1].Hits + stats[player1].SunkenShips);
-            
             dict.Add(player1, new PlayerStat(stats[player1].Hits + stats[player1].SunkenShips, stats[player1].Misses, player1Survive));
             dict.Add(player2, new PlayerStat(stats[player2].Hits + stats[player2].SunkenShips, stats[player2].Misses, player2Survive));
 
