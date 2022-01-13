@@ -1,25 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Diagnostics;
+using System.Linq;
+using System.Windows.Controls;
 
 namespace NationalInstruments
 {
     /// <summary>
     /// Interaction logic for ScorePage.xaml
     /// </summary>
-
     public partial class ScorePage : Page
     {
         private readonly IDataStore _dataStore;
@@ -27,41 +16,60 @@ namespace NationalInstruments
         {
             InitializeComponent();
             _dataStore = dataStore;
-            List<Outcome> outcomes = dataStore.GetAllOutcomes().ToList();
-            Debug.WriteLine($"Number of games in dataStore: {outcomes.Count()}");
 
-            outcomes.ForEach(outcome =>
-            {
-                ScoreStats stats = new ScoreStats();
-                stats._score_player1 = outcome.Players.ToArray()[0].Name;
-                stats._score_player2 = outcome.Players.ToArray()[1].Name;
-                Debug.WriteLine($"Received game with players {outcome.Players.ToArray()[0]}, {outcome.Players.ToArray()[1]}");
-                stats._score_rounds = outcome.NumberOfRounds;
-                stats._score_winner = outcome.Winner.Name;
-                stats._score_p1Hits = outcome.PlayerStats[outcome.Players.ToArray()[0]].Hits;
-                stats._score_p2Hits = outcome.PlayerStats[outcome.Players.ToArray()[1]].Hits;
-                Datagrid.Items.Add(stats);
-            });
+            List<Outcome> outcomes = _dataStore.GetAllOutcomes().ToList();
+            Debug.WriteLine($"Number of games in dataStore: {outcomes.Count}");
+
+            outcomes.ForEach(outcome => Datagrid.Items.Add(new OutcomeDataRowAdapter(outcome)));
         }
+    }
 
-        public class ScoreStats
+    public struct OutcomeDataRowAdapter
+    {
+        private readonly Outcome _outcome;
+        private readonly Player _player1;
+        private readonly Player _player2;
+
+        public OutcomeDataRowAdapter(Outcome outcome)
         {
-            public string _score_player1 { get; set; }
-            public string _score_player2 { get; set; }
-            public int _score_rounds { get; set; }
-            public int _score_p1Hits { get; set; }
-            public int _score_p2Hits { get; set; }
-            public string _score_winner { get; set; }
-            /*
-            public ScoreStats(string player1, string player2, int scoreRounds, int p1Hits, int p2Hits, string winner)
-            {
-                _score_player1 = player1;
-                _score_player2 = player2;
-                _score_rounds = scoreRounds;
-                _score_p1Hits = p1Hits;
-                _score_p2Hits = p2Hits;
-                _score_winner = winner;
-            }*/
+            _outcome = outcome;
+            // These could be expensive to get, so we cache them
+            _player1 = _outcome.Players.First();
+            _player2 = _outcome.Players.Skip(1).First();
         }
+
+        public Player Player1 => _player1;
+        public string Player1Name { get => Player1.Name; }
+        public Player Player2 => _player2;
+        public string Player2Name { get => Player2.Name; }
+        public int Rounds { get => _outcome.NumberOfRounds; }
+        public int Player1Hits { get => _outcome.PlayerStats[Player1].Hits; }
+        public int Player2Hits { get => _outcome.PlayerStats[Player2].Hits; }
+        public string Winner { get => _outcome.Winner.Name; }
+
+        #region Junk
+
+        public override bool Equals(object? obj)
+        {
+            return obj is OutcomeDataRowAdapter adapter
+                && EqualityComparer<Outcome>.Default.Equals(_outcome, adapter._outcome);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(_outcome);
+        }
+
+        public static bool operator ==(OutcomeDataRowAdapter left, OutcomeDataRowAdapter right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(OutcomeDataRowAdapter left, OutcomeDataRowAdapter right)
+        {
+            return !(left == right);
+        }
+
+        #endregion
     }
 }

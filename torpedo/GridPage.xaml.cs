@@ -3,16 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 #pragma warning disable CA1305 // Specify IFormatProvider
@@ -29,27 +22,27 @@ namespace NationalInstruments
         private int _time = 0;
 
         private bool _inCheatMode = false;
-        private bool _inAIMode = false;
         private bool _inPlayerViewMode = false;
+        private readonly bool _inAIMode = false;
 
-        private IDataStore _dataStore;
-        private TorpedoService _torpedoGameInstance;
+        private readonly IDataStore _dataStore;
+        private readonly TorpedoService _torpedoGameInstance;
         private TorpedoButton? _selectedButton;
-        private Player? _humanPlayer;
+        private Player _humanPlayer;
         private Player _aiPlayer;
         private Player? _winner;
-        private readonly Dictionary<Player, PlayerStats> _playerStats = new ();
+        private readonly Dictionary<Player, PlayerStats> _playerStats = new();
         private readonly TorpedoButton[,] _buttonArray = new TorpedoButton[9, 9];
 
-        private readonly SolidColorBrush _cyan = new (Colors.Cyan);
-        private readonly SolidColorBrush _lightGray = new (Colors.LightGray);
+        private readonly SolidColorBrush _cyan = new(Colors.Cyan);
+        private readonly SolidColorBrush _lightGray = new(Colors.LightGray);
 
         #region UIManipulation
-        private void InitializeGridPage(string player1, string player2)
+        private void InitializeGridPage(Player player1, Player player2)
         {
             InitializeTable();
-            label_player1.Text = player1;
-            label_player2.Text = player2;
+            label_player1.Text = player1.Name;
+            label_player2.Text = player2.Name;
         }
 
         private void InitializeTable()
@@ -58,18 +51,18 @@ namespace NationalInstruments
             {
                 for (int j = 1; j < 10; j++)
                 {
-                    TorpedoButton button = new ();
+                    TorpedoButton button = new();
 
                     button.Content = "O";
 
-                    button.SetX_coord(i - 1);
-                    button.SetY_coord(j - 1);
+                    button.X = i - 1;
+                    button.Y = j - 1;
 
                     button.Background = _lightGray;
 
                     button.Click += (sender, e) =>
                     {
-                        ButtonPress(button.GetX_coord(), button.GetY_coord());
+                        ButtonPress(button.X, button.Y);
                     };
 
                     Grid.SetColumn(button, i);
@@ -150,7 +143,7 @@ namespace NationalInstruments
         {
             EGameState.PlacingShips => $"Placing ships, {_torpedoGameInstance.CurrentPlayer}'s turn",
             EGameState.SinkingShips => $"Turn {_torpedoGameInstance.Rounds}, {_torpedoGameInstance.CurrentPlayer}'s turn",
-            EGameState.GameOver => $"Game over, {_winner.Name} won",
+            EGameState.GameOver => $"Game over, {_winner?.Name} won",
             _ => string.Empty
         };
 
@@ -187,7 +180,7 @@ namespace NationalInstruments
                 for (int j = 0; j < 9; j++)
                 {
                     _buttonArray[i, j].IsEnabled = false;
-                    if (_buttonArray[i, j].Content != "X")
+                    if (_buttonArray[i, j].Content.ToString() != "X")
                     {
                         _buttonArray[i, j].Content = " ";
                         _buttonArray[i, j].Background = _cyan;
@@ -388,12 +381,17 @@ namespace NationalInstruments
 
         private void EvaluatePlacement(TorpedoButton button)
         {
-            Player player = _torpedoGameInstance.CurrentPlayer;
+            Player? player = _torpedoGameInstance.CurrentPlayer;
+            if (player == null)
+            {
+                return;
+            }
+
             Ship ship = _torpedoGameInstance.ShipsToPlace(player).First();
             Position position;
             if (ship.Size == 1)
             {
-                position = new Position(button.GetX_coord(), button.GetY_coord());
+                position = new Position(button.X, button.Y);
                 ship.Orientation = EOrientation.Up;
                 PlaceShip(player, ship, position);
             }
@@ -406,38 +404,38 @@ namespace NationalInstruments
             else if (_selectedButton == null)
             {
                 _selectedButton = button;
-                Debug.WriteLine($"First location selected as {button.GetX_coord()}:{button.GetY_coord()}");
+                Debug.WriteLine($"First location selected as {button.X}:{button.Y}");
                 _selectedButton.Background = _cyan;
             }
             else
             {
-                Debug.WriteLine($"Second location selected as {button.GetX_coord()}:{button.GetY_coord()}");
-                if (_selectedButton.GetX_coord() + 1 == button.GetX_coord() && _selectedButton.GetY_coord() == button.GetY_coord())
+                Debug.WriteLine($"Second location selected as {button.X}:{button.Y}");
+                if (_selectedButton.X + 1 == button.X && _selectedButton.Y == button.Y)
                 {
                     Debug.WriteLine("Second location is right to the first location");
                     ship.Orientation = EOrientation.Right;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.X, _selectedButton.Y);
                     PlaceShip(player, ship, position);
                 }
-                else if (_selectedButton.GetX_coord() - 1 == button.GetX_coord() && _selectedButton.GetY_coord() == button.GetY_coord())
+                else if (_selectedButton.X - 1 == button.X && _selectedButton.Y == button.Y)
                 {
                     Debug.WriteLine("Second location is left to the first location");
                     ship.Orientation = EOrientation.Left;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.X, _selectedButton.Y);
                     PlaceShip(player, ship, position);
                 }
-                else if (_selectedButton.GetY_coord() - 1 == button.GetY_coord() && _selectedButton.GetX_coord() == button.GetX_coord())
+                else if (_selectedButton.Y - 1 == button.Y && _selectedButton.X == button.X)
                 {
                     Debug.WriteLine("Second location is above the first location");
                     ship.Orientation = EOrientation.Up;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.X, _selectedButton.Y);
                     PlaceShip(player, ship, position);
                 }
-                else if (_selectedButton.GetY_coord() + 1 == button.GetY_coord() && _selectedButton.GetX_coord() == button.GetX_coord())
+                else if (_selectedButton.Y + 1 == button.Y && _selectedButton.X == button.X)
                 {
                     Debug.WriteLine("Second location is below the first location");
                     ship.Orientation = EOrientation.Down;
-                    position = new Position(_selectedButton.GetX_coord(), _selectedButton.GetY_coord());
+                    position = new Position(_selectedButton.X, _selectedButton.Y);
                     PlaceShip(player, ship, position);
                 }
                 else
@@ -509,7 +507,7 @@ namespace NationalInstruments
                 if (_inAIMode)
                 {
                     AI_shoot();
-                    if(_torpedoGameInstance.GameState == EGameState.GameOver)
+                    if (_torpedoGameInstance.GameState == EGameState.GameOver)
                     {
                         Debug.WriteLine("Game is finished");
                         FinishGame();
@@ -543,6 +541,11 @@ namespace NationalInstruments
 
         public void FinishGame()
         {
+            if (_winner is null)
+            {
+                return;
+            }
+
             Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
             Array.ForEach(_torpedoGameInstance.Players.ToArray(), x =>
             {
@@ -600,17 +603,18 @@ namespace NationalInstruments
 
         private Dictionary<Player, PlayerStat> ConvertStats(Dictionary<Player, PlayerStats> stats)
         {
-            Dictionary<Player,PlayerStat> dict = new Dictionary<Player, PlayerStat>();
+            Dictionary<Player, PlayerStat> dict = new();
             Player player1 = stats.Keys.ToArray()[0];
             Player player2 = stats.Keys.ToArray()[1];
-            
+
             int player1Survive = 10 - (stats[player2].Hits + stats[player2].SunkenShips);
             int player2Survive = 10 - (stats[player1].Hits + stats[player1].SunkenShips);
-            
+
             dict.Add(player1, new PlayerStat(stats[player1].Hits + stats[player1].SunkenShips, stats[player1].Misses, player1Survive));
             dict.Add(player2, new PlayerStat(stats[player2].Hits + stats[player2].SunkenShips, stats[player2].Misses, player2Survive));
 
-            dict.Keys.ToList().ForEach(player => {
+            dict.Keys.ToList().ForEach(player =>
+            {
                 Debug.WriteLine($"{player.Name}'s stats are. {dict[player].Hits} hits. {dict[player].Misses} misses. {dict[player].SurvivingShipParts} surviving parts.");
             });
 
@@ -644,12 +648,14 @@ namespace NationalInstruments
 
         #endregion
 
-        public GridPage(IDataStore dataStore, string player1 = "Player1", string player2 = "Player2")
+        public GridPage(IDataStore dataStore, Player player1, Player player2)
         {
             InitializeComponent();
             _dataStore = dataStore;
             _torpedoGameInstance = new TorpedoService(_dataStore, (9, 9));
-            _inAIMode = player2 == "AI";
+            _inAIMode = player2 == _dataStore.AIPlayer;
+            _aiPlayer = dataStore.AIPlayer;
+            _humanPlayer = player1;
             InitializeGridPage(player1, player2);
             StartGame();
         }

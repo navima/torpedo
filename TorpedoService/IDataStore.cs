@@ -1,4 +1,8 @@
-﻿#nullable enable
+﻿// <copyright file="TorpedoServiceTests.cs" company="University Of Debrecen">
+// Copyright (c) University Of Debrecen. All rights reserved.
+// </copyright>
+
+#nullable enable
 #pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable SA1313
 
@@ -10,6 +14,7 @@ namespace NationalInstruments
     {
         public Player? GetPlayerByName(string name);
         public Player GetOrCreatePlayerByName(string name);
+        public Player AIPlayer { get; }
         public Player CreatePlayer(string name);
         public IEnumerable<Player> GetAllPlayers();
         public void AddOutcome(Outcome outcome);
@@ -20,6 +25,7 @@ namespace NationalInstruments
     {
         private readonly List<Player> _players = new();
         private readonly List<Outcome> _outcomes = new();
+        private readonly Player _aiPlayer = new("AI");
 
         public Player CreatePlayer(string name)
         {
@@ -37,6 +43,8 @@ namespace NationalInstruments
         public Player GetOrCreatePlayerByName(string name) => GetPlayerByName(name) ?? CreatePlayer(name);
 
         public Player? GetPlayerByName(string name) => _players.Find(p => p.Name == name);
+
+        public Player AIPlayer => _aiPlayer;
     }
 
     public record Outcome(IEnumerable<Player> Players, IDictionary<Player, PlayerStat> PlayerStats, Player Winner, int NumberOfRounds);

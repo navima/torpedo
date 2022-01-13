@@ -1,4 +1,8 @@
-﻿#nullable enable
+﻿// <copyright file="TorpedoServiceTests.cs" company="University Of Debrecen">
+// Copyright (c) University Of Debrecen. All rights reserved.
+// </copyright>
+
+#nullable enable
 
 namespace NationalInstruments
 {
@@ -13,7 +17,7 @@ namespace NationalInstruments
 
         public override string? ToString()
         {
-            return Name;
+            return $"Player{{Name: {Name}}}";
         }
     }
 }

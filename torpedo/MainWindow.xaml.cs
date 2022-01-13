@@ -1,18 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
+﻿using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace NationalInstruments
 {
@@ -20,7 +7,7 @@ namespace NationalInstruments
     {
         private char _openedPage = 'N';
         private GridPage? _page = null;
-        private IDataStore _store;
+        private readonly IDataStore _store;
 
         public MainWindow()
         {
@@ -46,7 +33,7 @@ namespace NationalInstruments
             var w = new NameGetWindow();
             if (w.ShowDialog() ?? false)
             {
-                _page = new GridPage(_store, w.PlayerName, "AI");
+                _page = new GridPage(_store, _store.GetOrCreatePlayerByName(w.PlayerName), _store.AIPlayer);
                 Main.Content = _page;
                 _openedPage = 'O';
             }
@@ -57,7 +44,7 @@ namespace NationalInstruments
             var w = new NameGetWindow2();
             if (w.ShowDialog() ?? false)
             {
-                Main.Content = new GridPage(_store, w.PlayerName1, w.PlayerName2);
+                Main.Content = new GridPage(_store, _store.GetOrCreatePlayerByName(w.PlayerName1), _store.GetOrCreatePlayerByName(w.PlayerName2));
                 _openedPage = 'T';
             }
         }

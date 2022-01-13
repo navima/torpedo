@@ -1,4 +1,8 @@
-﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
+﻿// <copyright file="TorpedoServiceTests.cs" company="University Of Debrecen">
+// Copyright (c) University Of Debrecen. All rights reserved.
+// </copyright>
+
+#pragma warning disable SA1000 // Keywords should be spaced correctly
 #pragma warning disable NI1704 // Identifiers should be spelled correctly
 #pragma warning disable CA2201 // Do not raise reserved exception types
 #nullable enable
@@ -33,6 +37,7 @@ namespace NationalInstruments
         {
             this.dataStore = dataStore;
             this._tableSize = tableSize;
+            CurrentPlayer = dataStore.AIPlayer;
         }
         #endregion
 
@@ -49,11 +54,13 @@ namespace NationalInstruments
             }
         }
         public IDictionary<Ship, int> StartingShips => _startingShips;
-        public Player? CurrentPlayer { get; private set; }
+        public Player CurrentPlayer { get; private set; }
         public (int, int) TableSize => _tableSize;
         public Bounds Bounds { get => new(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
         public int Rounds { get; private set; }
         public IDictionary<Player, Dictionary<Position, EHitResult>> HitResults => _hitResults;
+
+        public Player AIPlayer => dataStore.AIPlayer;
         #endregion
 
         private void EnsureState(EGameState state)
@@ -139,7 +146,6 @@ namespace NationalInstruments
                 var wraparound = IncrementPlayer();
                 if (wraparound)
                 {
-
                     Rounds = 1;
                     GameState = EGameState.SinkingShips;
                 }
@@ -372,203 +378,5 @@ namespace NationalInstruments
     public static class EHitResultExtensions
     {
         public static EHitResult Escalate(this EHitResult self, EHitResult target) => target > self ? target : self;
-    }
-
-    public static class IListExtensions
-    {
-
-        private static Random _random = new();
-        /// <summary>
-        /// <para>
-        /// Shuffles the List in-place using the Fisher-Yates algorithm.
-        /// </para>
-        /// <para>
-        /// <see href="https://en.wikipedia.org/wiki/Fisher–Yates_shuffle"/>
-        /// </para>
-        /// <para>
-        /// <seealso href="https://stackoverflow.com/a/1262619/9281022"/>
-        /// </para>
-        /// </summary>
-        /// <param name="list">this</param>
-        public static void Shuffle<T>(this IList<T> list)
-        {
-            int n = list.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = _random.Next(n + 1);
-                T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
-            }
-        }
-    }
-
-    public readonly struct Position
-    {
-        public Position(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-
-        public int X { get; init; }
-        public int Y { get; init; }
-
-        public static Position operator +(Position left, Position right) => new(left.X + right.X, left.Y + right.Y);
-        public static Position operator -(Position left, Position right) => new(left.X - right.X, left.Y - right.Y);
-
-        #region Junk
-        public override bool Equals(object? obj)
-        {
-            return obj is Position position
-                && X == position.X
-                && Y == position.Y;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(X, Y);
-        }
-
-        public override string? ToString() => $"x: {X}, y: {Y}";
-
-        public static bool operator ==(Position left, Position right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(Position left, Position right)
-        {
-            return !(left == right);
-        }
-        #endregion
-    }
-
-    public readonly struct Bounds
-    {
-        public Bounds(int x, int y, int width, int height)
-        {
-            X = x;
-            Y = y;
-            Width = width;
-            Height = height;
-        }
-        public int X { get; init; }
-        public int Y { get; init; }
-        public int Width { get; init; }
-        public int Height { get; init; }
-
-        public bool Contains(Position position)
-        {
-            return position.X >= X
-                && position.Y >= Y
-                && position.X <= Width
-                && position.Y <= Height;
-        }
-
-        public Position GetRandomPoint()
-        {
-            var random = new Random();
-            var x = random.Next(X, X + Width + 1);
-            var y = random.Next(Y, Y + Height + 1);
-            return new Position(x, y);
-        }
-
-        #region Junk
-
-        public override bool Equals(object? obj)
-        {
-            return obj is Bounds bounds
-                && X == bounds.X
-                && Y == bounds.Y
-                && Width == bounds.Width
-                && Height == bounds.Height;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(X, Y, Width, Height);
-        }
-
-        public override string? ToString()
-        {
-            return base.ToString();
-        }
-
-        public static bool operator ==(Bounds left, Bounds right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(Bounds left, Bounds right)
-        {
-            return !(left == right);
-        }
-
-        #endregion
-    }
-
-    public class Ship
-    {
-        // TODO Change to Dictionary to support arbitrary shapes
-        private readonly List<ShipPart> _parts;
-        public int Size { get; init; }
-        public EOrientation Orientation { get; set; }
-        public bool Dead { get => !Parts.Where(x => x.Alive).Any(); }
-        public ShipPart this[int index]
-        {
-            get => _parts[index];
-            set => _parts[index] = value;
-        }
-
-        public Ship(int size)
-        {
-            Size = size;
-            _parts = new List<ShipPart>(Size);
-            for (int i = 0; i < Size; i++)
-            {
-                _parts.Add(new ShipPart(this));
-            }
-        }
-        // Copy constructor
-        public Ship(Ship other) : this(other.Size)
-        {
-            this.Orientation = other.Orientation;
-        }
-
-        public IEnumerable<ShipPart> Parts => _parts;
-
-        [Pure]
-        public IDictionary<Position, ShipPart> ExpandParts(Position position) =>
-            new Dictionary<Position, ShipPart>(Enumerable.Range(0, Size).Select(i =>
-               new KeyValuePair<Position, ShipPart>(
-                   new Position(
-                       position.X + i * (Orientation == EOrientation.Right ? 1 : Orientation == EOrientation.Left ? -1 : 0),
-                       position.Y + i * (Orientation == EOrientation.Up ? -1 : Orientation == EOrientation.Down ? 1 : 0)),
-                   _parts[i])));
-        public override string ToString() => $"Ship[{Parts.Select(x => x.Alive ? "O" : "X").Aggregate((x, y) => x + y)}]";
-    }
-
-    public class ShipPart
-    {
-        public bool Alive { get; private set; } = true;
-        public Ship Parent { get; init; }
-        public ShipPart(Ship parent) => Parent = parent;
-        public void Hit() => Alive = false;
-    }
-
-    public enum EOrientation
-    {
-        Up, Right, Down, Left
-    }
-
-    public enum EGameState
-    {
-        None = 0,
-        AddingPlayers,
-        PlacingShips,
-        SinkingShips,
-        GameOver
     }
 }

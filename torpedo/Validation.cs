@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// <copyright file="TorpedoServiceTests.cs" company="University Of Debrecen">
+// Copyright (c) University Of Debrecen. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 #pragma warning disable SA1000 // Keywords should be spaced correctly

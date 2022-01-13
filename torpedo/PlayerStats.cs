@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿#pragma warning disable SA1000 // Keywords should be spaced correctly
 
 namespace NationalInstruments
 {
+    using System.Collections.Generic;
+
     internal class PlayerStats
     {
         public int SunkenShips { get; private set; }

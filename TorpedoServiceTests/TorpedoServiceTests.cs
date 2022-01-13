@@ -1,10 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NationalInstruments;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// <copyright file="TorpedoServiceTests.cs" company="University Of Debrecen">
+// Copyright (c) University Of Debrecen. All rights reserved.
+// </copyright>
 
 #pragma warning disable NI1007 // Test classes must ultimately inherit from 'AutoTest'
 #pragma warning disable SA1600 // Elements should be documented
@@ -16,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace NationalInstruments.Tests
 {
+    using System.Linq;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
     [TestClass]
     public class TorpedoServiceTests
     {
