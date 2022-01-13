@@ -53,6 +53,7 @@ namespace NationalInstruments
         public (int, int) TableSize => _tableSize;
         public Bounds Bounds { get => new(0, 0, _tableSize.Item1 - 1, _tableSize.Item2 - 1); }
         public int Rounds { get; private set; }
+        public IDictionary<Player, Dictionary<Position, EHitResult>> HitResults => _hitResults;
         #endregion
 
         private void EnsureState(EGameState state)
@@ -129,6 +130,7 @@ namespace NationalInstruments
 #pragma warning restore CS8605 // Unboxing a possibly null value.
             }
         }
+        // TODO maybe make this parralel?
         public void FinishPlacingShips(Player player)
         {
             EnsureState(EGameState.PlacingShips);
@@ -532,6 +534,7 @@ namespace NationalInstruments
         // Copy constructor
         public Ship(Ship other) : this(other.Size)
         {
+            this.Orientation = other.Orientation;
         }
 
         public IEnumerable<ShipPart> Parts => _parts;
