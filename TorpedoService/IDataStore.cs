@@ -46,8 +46,4 @@ namespace NationalInstruments
 
         public Player AIPlayer => _aiPlayer;
     }
-
-    public record Outcome(IEnumerable<Player> Players, IDictionary<Player, PlayerStat> PlayerStats, Player Winner, int NumberOfRounds);
-
-    public record PlayerStat(int Hits, int Misses, int SurvivingShipParts);
 }

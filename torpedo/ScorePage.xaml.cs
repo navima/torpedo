@@ -43,8 +43,22 @@ namespace NationalInstruments
         public Player Player2 => _player2;
         public string Player2Name { get => Player2.Name; }
         public int Rounds { get => _outcome.NumberOfRounds; }
-        public int Player1Hits { get => _outcome.PlayerStats[Player1].Hits; }
-        public int Player2Hits { get => _outcome.PlayerStats[Player2].Hits; }
+        public int Player1Hits
+        {
+            get
+            {
+                var p1 = Player1;
+                return _outcome.PlayerStats.FirstOrDefault(x => x.Player == p1).Hits;
+            }
+        }
+        public int Player2Hits
+        {
+            get
+            {
+                var p2 = Player2;
+                return _outcome.PlayerStats.FirstOrDefault(x => x.Player == p2).Hits;
+            }
+        }
         public string Winner { get => _outcome.Winner.Name; }
 
         #region Junk

@@ -566,7 +566,7 @@ namespace NationalInstruments
             }
 
             Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
-            _dataStore.AddOutcome(new Outcome(_torpedoGameInstance.Players, ConvertStats(_playerStats), _winner, _torpedoGameInstance.Rounds));
+            _dataStore.AddOutcome(new Outcome(_torpedoGameInstance.Players.ToArray(), ConvertStats(_playerStats), _winner, _torpedoGameInstance.Rounds));
         }
 
         private void MoveState()
@@ -603,24 +603,19 @@ namespace NationalInstruments
 
         #endregion
 
-        private Dictionary<Player, PlayerStat> ConvertStats(Dictionary<Player, PlayerStats> stats)
+        private IList<PlayerStat> ConvertStats(Dictionary<Player, PlayerStats> inStats)
         {
-            Dictionary<Player, PlayerStat> dict = new();
-            Player player1 = stats.Keys.ToArray()[0];
-            Player player2 = stats.Keys.ToArray()[1];
+            List<PlayerStat> outStats = new();
+            Player player1 = inStats.Keys.ToArray()[0];
+            Player player2 = inStats.Keys.ToArray()[1];
 
-            int player1Survive = 10 - (stats[player2].Hits + stats[player2].SunkenShips);
-            int player2Survive = 10 - (stats[player1].Hits + stats[player1].SunkenShips);
+            int player1Survive = 10 - (inStats[player2].Hits + inStats[player2].SunkenShips);
+            int player2Survive = 10 - (inStats[player1].Hits + inStats[player1].SunkenShips);
 
-            dict.Add(player1, new PlayerStat(stats[player1].Hits + stats[player1].SunkenShips, stats[player1].Misses, player1Survive));
-            dict.Add(player2, new PlayerStat(stats[player2].Hits + stats[player2].SunkenShips, stats[player2].Misses, player2Survive));
+            outStats.Add(new PlayerStat(inStats[player1].Hits + inStats[player1].SunkenShips, inStats[player1].Misses, player1Survive) { Player = player1 });
+            outStats.Add(new PlayerStat(inStats[player2].Hits + inStats[player2].SunkenShips, inStats[player2].Misses, player2Survive) { Player=player2});
 
-            dict.Keys.ToList().ForEach(player =>
-            {
-                Debug.WriteLine($"{player.Name}'s stats are. {dict[player].Hits} hits. {dict[player].Misses} misses. {dict[player].SurvivingShipParts} surviving parts.");
-            });
-
-            return dict;
+            return outStats;
         }
 
         #region _timer

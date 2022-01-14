@@ -4,10 +4,15 @@
 
 #nullable enable
 
+using System.ComponentModel.DataAnnotations;
+
 namespace NationalInstruments
 {
     public class Player
     {
+        [Key]
+        public int Id { get; set; }
+        [Required]
         public string Name { get; init; }
 
         public Player(string name)
