@@ -141,8 +141,8 @@ namespace NationalInstruments
         private void UpdateRounds() => turnlabel.Text = CreateLabelText();
         private string CreateLabelText() => _torpedoGameInstance.GameState switch
         {
-            EGameState.PlacingShips => $"Placing ships, {_torpedoGameInstance.CurrentPlayer}'s turn",
-            EGameState.SinkingShips => $"Turn {_torpedoGameInstance.Rounds}, {_torpedoGameInstance.CurrentPlayer}'s turn",
+            EGameState.PlacingShips => $"Placing ships, {_torpedoGameInstance.CurrentPlayer.Name}'s turn",
+            EGameState.SinkingShips => $"Turn {_torpedoGameInstance.Rounds}, {_torpedoGameInstance.CurrentPlayer.Name}'s turn",
             EGameState.GameOver => $"Game over, {_winner?.Name} won",
             _ => string.Empty
         };
