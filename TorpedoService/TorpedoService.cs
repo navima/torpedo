@@ -86,7 +86,6 @@ namespace NationalInstruments
                 _placedShips.Add(player, new Dictionary<Position, Ship>());
                 _hitResults.Add(player, new Dictionary<Position, EHitResult>());
             }
-            _players.Shuffle();
             IncrementPlayer();
             GameState = EGameState.PlacingShips;
         }
@@ -100,14 +99,14 @@ namespace NationalInstruments
             EnsureState(EGameState.PlacingShips);
             var expanded = ship.ExpandParts(position);
 
-            bool isCurrentPlayer = CurrentPlayer == player;
+            //bool isCurrentPlayer = CurrentPlayer == player;
             bool hasShip = ShipsToPlace(player).Contains(ship);
             bool hasCollision = PlacedShips(player)
                         .SelectMany(x => x.Value.ExpandParts(x.Key).Keys)
                         .Any(x => expanded.Keys.Contains(x));
             bool isInsideBounds = expanded.All(part => Bounds.Contains(part.Key));
 
-            return isCurrentPlayer
+            return true // isCurrentPlayer
                 && hasShip
                 && !hasCollision
                 && isInsideBounds;
@@ -119,6 +118,12 @@ namespace NationalInstruments
             {
                 _unPlacedShips[player].Remove(ship);
                 PlacedShips(player).Add(position, ship);
+                if(_unPlacedShips.All(kvp => !kvp.Value.Any()))
+                {
+                    _players.Shuffle();
+                    Rounds = 1;
+                    GameState = EGameState.SinkingShips;
+                }
                 return true;
             }
             else
@@ -139,17 +144,18 @@ namespace NationalInstruments
         }
         // TODO maybe make this parralel?
         public void FinishPlacingShips(Player player)
-        {
+        {/*
             EnsureState(EGameState.PlacingShips);
-            if (CurrentPlayer == player)
+            if (CurrentPlayer != player)
             {
-                var wraparound = IncrementPlayer();
-                if (wraparound)
-                {
-                    Rounds = 1;
-                    GameState = EGameState.SinkingShips;
-                }
+                throw new Exception("Bad player!");
             }
+            var wraparound = IncrementPlayer();
+            if (wraparound)
+            {
+                Rounds = 1;
+                GameState = EGameState.SinkingShips;
+            }*/
         }
         public bool CanHit(Player player, Position position)
         {

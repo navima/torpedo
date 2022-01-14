@@ -27,7 +27,7 @@ namespace NationalInstruments
 
         private readonly IDataStore _dataStore;
         private readonly TorpedoService _torpedoGameInstance;
-        private TorpedoButton? _selectedButton;
+        private TorpedoButton? _firstPosition;
         private Player _humanPlayer;
         private Player _aiPlayer;
         private Player? _winner;
@@ -105,19 +105,17 @@ namespace NationalInstruments
             UpdateInstructions();
             UpdateRounds();
 
-            if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
+            switch (_torpedoGameInstance.GameState)
             {
-                UpdatePlacing(_torpedoGameInstance.GetBoard(_torpedoGameInstance.CurrentPlayer));
-            }
-
-            if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
-            {
-                UpdatePlaying(_torpedoGameInstance.GetHitBoard(_torpedoGameInstance.CurrentPlayer));
-            }
-
-            if (_torpedoGameInstance.GameState == EGameState.GameOver)
-            {
-                LockTable();
+                case EGameState.PlacingShips:
+                    UpdatePlacing(_torpedoGameInstance.GetBoard(_torpedoGameInstance.CurrentPlayer));
+                    break;
+                case EGameState.SinkingShips:
+                    UpdatePlaying(_torpedoGameInstance.GetHitBoard(_torpedoGameInstance.CurrentPlayer));
+                    break;
+                case EGameState.GameOver:
+                    LockTable();
+                    break;
             }
             _torpedoGameInstance.Players.ToList().ForEach(player =>
             {
@@ -158,15 +156,14 @@ namespace NationalInstruments
             {
                 tb = Player2Status;
             }
-            int sunken_ships = _playerStats[player].SunkenShips;
-            int hits = _playerStats[player].Hits;
-            int misses = _playerStats[player].Misses;
-            var shipStatus = _playerStats[player].GetShipStatuses();
+
+            var (sunkenShips, hits, misses, shipStatuses) = _playerStats[player];
+
             StringBuilder sb = new();
-            sb.AppendLine($"Sunken ships: {sunken_ships}");
+            sb.AppendLine($"Sunken ships: {sunkenShips}");
             sb.AppendLine($"Hits: {hits}");
             sb.AppendLine($"Misses: {misses}");
-            foreach (var (ship, status) in shipStatus)
+            foreach (var (ship, status) in shipStatuses)
             {
                 sb.AppendLine($"ship {ship.Size}: {status.ToUserReadableString()}");
             }
@@ -175,16 +172,13 @@ namespace NationalInstruments
 
         private void LockTable()
         {
-            for (int i = 0; i < 9; i++)
+            foreach (var button in _buttonArray)
             {
-                for (int j = 0; j < 9; j++)
+                button.IsEnabled = false;
+                if (button.Content.ToString() != "X")
                 {
-                    _buttonArray[i, j].IsEnabled = false;
-                    if (_buttonArray[i, j].Content.ToString() != "X")
-                    {
-                        _buttonArray[i, j].Content = " ";
-                        _buttonArray[i, j].Background = _cyan;
-                    }
+                    button.Content = " ";
+                    button.Background = _cyan;
                 }
             }
         }
@@ -195,7 +189,7 @@ namespace NationalInstruments
             {
                 if (x.Value.Dead)
                 {
-                    _playerStats[player].SetShipStatus(x.Value, EShipStatus.Dead);
+                    _playerStats[player].ShipStatuses[x.Value] = EShipStatus.Dead;
                 }
             });
         }
@@ -238,126 +232,90 @@ namespace NationalInstruments
 
         private void UpdatePlacing(ShipPart?[,] ships)
         {
-            if (_inCheatMode)
+            IterateOver2DArray(ships, (i, j, elem) =>
             {
-                for (int i = 0; i < 9; i++)
+                if (elem is null)
                 {
-                    for (int j = 0; j < 9; j++)
+                    if (_inCheatMode)
                     {
-                        if (ships[i, j] == null)
-                        {
-                            _buttonArray[i, j].Content = " ";
-                            _buttonArray[i, j].IsEnabled = false;
-                        }
-                        else
-                        {
-                            _buttonArray[i, j].Content = "X";
-                            _buttonArray[i, j].IsEnabled = false;
-                        }
+                        _buttonArray[i, j].Content = " ";
+                        _buttonArray[i, j].IsEnabled = false;
+                    }
+                    else
+                    {
+                        _buttonArray[i, j].Background = _lightGray;
+                        _buttonArray[i, j].IsEnabled = true;
+                        _buttonArray[i, j].Content = "O";
                     }
                 }
-            }
-            else
-            {
-                for (int i = 0; i < 9; i++)
+                else
                 {
-                    for (int j = 0; j < 9; j++)
-                    {
-                        if (ships[i, j] == null)
-                        {
-                            _buttonArray[i, j].Background = _lightGray;
-                            _buttonArray[i, j].IsEnabled = true;
-                            _buttonArray[i, j].Content = "O";
-                        }
-                        else
-                        {
-                            _buttonArray[i, j].IsEnabled = false;
-                            _buttonArray[i, j].Content = "X";
-                        }
-                    }
+                    _buttonArray[i, j].Content = "X";
+                    _buttonArray[i, j].IsEnabled = false;
                 }
-            }
+            });
         }
 
         private void UpdatePlaying(EHitResult?[,] hitTable)
         {
-            for (int i = 0; i < 9; i++)
+            IterateOver2DArray(hitTable, (i, j, elem) =>
             {
-                for (int j = 0; j < 9; j++)
+                var button = _buttonArray[i, j];
+                button.IsEnabled = false;
+                switch (elem)
                 {
-                    switch (hitTable[i, j])
-                    {
-                        case EHitResult.Miss:
-                            _buttonArray[i, j].Background = _cyan;
-                            _buttonArray[i, j].Background = _cyan;
-                            _buttonArray[i, j].Content = " ";
-                            _buttonArray[i, j].IsEnabled = false;
-                            if (_inPlayerViewMode)
-                            {
-                                _buttonArray[i, j].Content = "O";
-                            }
-                            break;
-                        case EHitResult.Sink:
-                            _buttonArray[i, j].Background = _cyan;
-                            _buttonArray[i, j].Content = "X";
-                            _buttonArray[i, j].IsEnabled = false;
-                            break;
-                        case EHitResult.Hit:
-                            _buttonArray[i, j].Background = _cyan;
-                            _buttonArray[i, j].Content = "X";
-                            _buttonArray[i, j].IsEnabled = false;
-                            break;
-                        default:
-                            _buttonArray[i, j].Background = _lightGray;
-                            _buttonArray[i, j].Content = " ";
-                            _buttonArray[i, j].IsEnabled = true;
-                            break;
-                    }
-                    if (_inPlayerViewMode)
-                    {
-                        _buttonArray[i, j].IsEnabled = false;
-                    }
+                    case EHitResult.Miss:
+                        button.Background = _cyan;
+                        button.Content = " ";
+                        if (_inPlayerViewMode)
+                        {
+                            button.Content = "O";
+                        }
+                        break;
+                    case EHitResult.Sink:
+                        button.Background = _cyan;
+                        button.Content = "X";
+                        break;
+                    case EHitResult.Hit:
+                        button.Background = _cyan;
+                        button.Content = "X";
+                        break;
+                    default:
+                        button.Background = _lightGray;
+                        button.Content = " ";
+                        button.IsEnabled = true;
+                        break;
+                }
+                if (_inPlayerViewMode)
+                {
+                    button.IsEnabled = false;
+                }
+            });
+        }
+
+        public void IterateOver2DArray<T>(T[,] arr, Action<int, int, T> action)
+        {
+            for (int i = 0; i < arr.GetLength(0); i++)
+            {
+                for (int j = 0; j < arr.GetLength(1); j++)
+                {
+                    action(i, j, arr[i, j]);
                 }
             }
         }
-
         #endregion
 
         #region GameLogic
 
         private void StartGame()
         {
-            Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
-            if (_inAIMode)
-            {
-                Debug.WriteLine("Game is in AI mode");
-            }
-            else
-            {
-                Debug.WriteLine("Game is not in AI mode");
-            }
+            _torpedoGameInstance.AddPlayer(_humanPlayer);
+            _torpedoGameInstance.AddPlayer(_aiPlayer);
+            Debug.WriteLine($"Added player {label_player1.Text}");
+            Debug.WriteLine($"Added player {label_player2.Text}");
 
-            if (_inAIMode)
-            {
-                _humanPlayer = _torpedoGameInstance.GetOrCreatePlayerByName(label_player1.Text);
-                _aiPlayer = _torpedoGameInstance.GetOrCreatePlayerByName(label_player2.Text);
-                _torpedoGameInstance.AddPlayer(_humanPlayer);
-                _torpedoGameInstance.AddPlayer(_aiPlayer);
-                Debug.WriteLine($"Added player {label_player1.Text}");
-                Debug.WriteLine($"Added player {label_player2.Text}");
-            }
-            else
-            {
-                _torpedoGameInstance.AddPlayer(_torpedoGameInstance.GetOrCreatePlayerByName(label_player1.Text));
-                Debug.WriteLine($"Added player with name {label_player1.Text}");
-                _torpedoGameInstance.AddPlayer(_torpedoGameInstance.GetOrCreatePlayerByName(label_player2.Text));
-                Debug.WriteLine($"Added player with name {label_player2.Text}");
-                Debug.WriteLine($"Added player {label_player1.Text}");
-                Debug.WriteLine($"Added player {label_player2.Text}");
-            }
             _torpedoGameInstance.FinishAddingPlayers();
-            Debug.WriteLine($"Current state is: {_torpedoGameInstance.GameState}");
-            Debug.WriteLine($"Current ship to palce is: Ship-{_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
+            Debug.WriteLine($"Current ship to palce is: {_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First()}");
             _torpedoGameInstance.Players.ToList().ForEach(player =>
             {
                 _playerStats.Add(player, new PlayerStats());
@@ -371,7 +329,7 @@ namespace NationalInstruments
             Debug.WriteLine($"Button {x}:{y} pressed");
             if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
             {
-                EvaluatePlacement(_buttonArray[x, y]);
+                ProcessButtonPress(_buttonArray[x, y]);
             }
             else if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
             {
@@ -379,80 +337,102 @@ namespace NationalInstruments
             }
         }
 
-        private void EvaluatePlacement(TorpedoButton button)
+        private void ProcessButtonPress(TorpedoButton? button)
         {
-            Player? player = _torpedoGameInstance.CurrentPlayer;
-            if (player == null)
+            if (button is null)
+            {
+                throw new ArgumentNullException(nameof(button));
+            }
+            if (_torpedoGameInstance.CurrentPlayer == null)
             {
                 return;
             }
+            Player player = _torpedoGameInstance.CurrentPlayer;
 
             Ship ship = _torpedoGameInstance.ShipsToPlace(player).First();
-            Position position;
-            if (ship.Size == 1)
-            {
-                position = new Position(button.X, button.Y);
-                ship.Orientation = EOrientation.Up;
-                PlaceShip(player, ship, position);
-            }
-            else if (button == _selectedButton)
+
+            if (button == _firstPosition)
             {
                 Debug.WriteLine("Already tried placing ship here, releasing");
                 button.Background = _lightGray;
-                _selectedButton = null;
+                _firstPosition = null;
+                return;
             }
-            else if (_selectedButton == null)
+
+            if (_firstPosition is null)
             {
-                _selectedButton = button;
+                _firstPosition = button;
                 Debug.WriteLine($"First location selected as {button.X}:{button.Y}");
-                _selectedButton.Background = _cyan;
+                _firstPosition.Background = _cyan;
+                button = null;
+            }
+
+            if (TryCalculateOrientation(button, ship, out var orientation))
+            {
+                Position position = new(_firstPosition.X, _firstPosition.Y);
+                Debug.WriteLine($"Orientation is: {orientation}");
+                ship.Orientation = orientation;
+                PlaceShip(player, ship, position);
+                _firstPosition = null;
             }
             else
             {
-                Debug.WriteLine($"Second location selected as {button.X}:{button.Y}");
-                if (_selectedButton.X + 1 == button.X && _selectedButton.Y == button.Y)
-                {
-                    Debug.WriteLine("Second location is right to the first location");
-                    ship.Orientation = EOrientation.Right;
-                    position = new Position(_selectedButton.X, _selectedButton.Y);
-                    PlaceShip(player, ship, position);
-                }
-                else if (_selectedButton.X - 1 == button.X && _selectedButton.Y == button.Y)
-                {
-                    Debug.WriteLine("Second location is left to the first location");
-                    ship.Orientation = EOrientation.Left;
-                    position = new Position(_selectedButton.X, _selectedButton.Y);
-                    PlaceShip(player, ship, position);
-                }
-                else if (_selectedButton.Y - 1 == button.Y && _selectedButton.X == button.X)
-                {
-                    Debug.WriteLine("Second location is above the first location");
-                    ship.Orientation = EOrientation.Up;
-                    position = new Position(_selectedButton.X, _selectedButton.Y);
-                    PlaceShip(player, ship, position);
-                }
-                else if (_selectedButton.Y + 1 == button.Y && _selectedButton.X == button.X)
-                {
-                    Debug.WriteLine("Second location is below the first location");
-                    ship.Orientation = EOrientation.Down;
-                    position = new Position(_selectedButton.X, _selectedButton.Y);
-                    PlaceShip(player, ship, position);
-                }
-                else
+                if(button is not null)
                 {
                     Debug.WriteLine("Positions are not adjecent, clearing selected button.");
-                    _selectedButton.Background = _lightGray;
-                    _selectedButton = null;
+                    _firstPosition.Background = _lightGray;
+                    _firstPosition = null;
                 }
             }
+        }
+
+        private bool TryCalculateOrientation(TorpedoButton? button, Ship ship, out EOrientation orientation)
+        {
+            if (ship.Size == 1)
+            {
+                orientation = EOrientation.Down;
+                return true;
+            }
+            if(button is null)
+            {
+                orientation = default;
+                return false;
+            }
+            if (_firstPosition is null)
+            {
+                orientation = default;
+                return false;
+            }
+            if (_firstPosition.X + 1 == button.X && _firstPosition.Y == button.Y)
+            {
+                orientation = EOrientation.Right;
+            }
+            else if (_firstPosition.X - 1 == button.X && _firstPosition.Y == button.Y)
+            {
+                orientation = EOrientation.Left;
+            }
+            else if (_firstPosition.Y - 1 == button.Y && _firstPosition.X == button.X)
+            {
+                orientation = EOrientation.Up;
+            }
+            else if (_firstPosition.Y + 1 == button.Y && _firstPosition.X == button.X)
+            {
+                orientation = EOrientation.Down;
+            }
+            else
+            {
+                orientation = default;
+                return false;
+            }
+            return true;
         }
 
         private void PlaceShip(Player player, Ship ship, Position position)
         {
             if (_torpedoGameInstance.TryPlaceShip(player, ship, position))
             {
-                _playerStats[player].SetShipStatus(ship, EShipStatus.Placed);
-                if (ship.Size == 4)
+                _playerStats[player].ShipStatuses[ship] = EShipStatus.Placed;
+                if (!_torpedoGameInstance.ShipsToPlace(player).Any())
                 {
                     Debug.WriteLine("Last ship placed");
                     _torpedoGameInstance.FinishPlacingShips(player);
@@ -460,14 +440,14 @@ namespace NationalInstruments
                 }
                 else
                 {
-                    Debug.WriteLine($"Ships successfully placed, next ship is: {_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
-                    _selectedButton = null;
+                    Debug.WriteLine($"Ship successfully placed, next ship is: {_torpedoGameInstance.ShipsToPlace(_torpedoGameInstance.CurrentPlayer).First().Size}");
+                    _firstPosition = null;
                 }
             }
             else
             {
                 Debug.WriteLine("Can't place ship here");
-                _selectedButton = null;
+                _firstPosition = null;
             }
             UpdateUI();
         }
@@ -477,9 +457,9 @@ namespace NationalInstruments
             while (_torpedoGameInstance.ShipsToPlace(_aiPlayer).Any())
             {
                 var ship = _torpedoGameInstance.ShipsToPlace(_aiPlayer).First();
-                Debug.WriteLine($"Current ship to place is {ship.Size}");
                 _torpedoGameInstance.PlaceShipRandom(_aiPlayer, ship);
-                _playerStats[_aiPlayer].SetShipStatus(ship, EShipStatus.Placed);
+                _playerStats[_aiPlayer].ShipStatuses[ship] = EShipStatus.Placed;
+                Debug.WriteLine($"AI placed ship: {ship}");
             }
             _torpedoGameInstance.FinishPlacingShips(_aiPlayer);
         }
@@ -489,17 +469,17 @@ namespace NationalInstruments
             Player player = _torpedoGameInstance.CurrentPlayer;
             Debug.Write($"{_torpedoGameInstance.CurrentPlayer} is trying to hit position {x}:{y}. ");
             _torpedoGameInstance.TryHit(player, new Position(x, y), out var res);
-            Debug.Write($"{res} \n");
+            Debug.WriteLine(res);
             switch (res)
             {
                 case EHitResult.Sink:
-                    _playerStats[player].IncrementSunkenShips();
+                    _playerStats[player].SunkenShips++;
                     break;
                 case EHitResult.Hit:
-                    _playerStats[player].IncrementHits();
+                    _playerStats[player].Hits++;
                     break;
                 default:
-                    _playerStats[player].IncrementMisses();
+                    _playerStats[player].Misses++;
                     break;
             }
             if (_torpedoGameInstance.GameState != EGameState.GameOver)
@@ -528,13 +508,13 @@ namespace NationalInstruments
             switch (res)
             {
                 case EHitResult.Sink:
-                    _playerStats[_aiPlayer].IncrementSunkenShips();
+                    _playerStats[_aiPlayer].SunkenShips++;
                     break;
                 case EHitResult.Hit:
-                    _playerStats[_aiPlayer].IncrementHits();
+                    _playerStats[_aiPlayer].Hits++;
                     break;
                 default:
-                    _playerStats[_aiPlayer].IncrementMisses();
+                    _playerStats[_aiPlayer].Misses++;
                     break;
             }
         }
@@ -546,9 +526,9 @@ namespace NationalInstruments
                 if (_torpedoGameInstance.IsPlayerDead(x))
                 {
                     Debug.WriteLine($"Player {x.Name} lost");
-                    foreach (var (ship, _) in _playerStats[x].GetShipStatuses())
+                    foreach (var (ship, _) in _playerStats[x].ShipStatuses)
                     {
-                        _playerStats[x].SetShipStatus(ship, EShipStatus.Dead);
+                        _playerStats[x].ShipStatuses[ship] = EShipStatus.Dead;
                     }
                 }
                 else
@@ -571,33 +551,32 @@ namespace NationalInstruments
 
         private void MoveState()
         {
-            if (_torpedoGameInstance.GameState == EGameState.PlacingShips)
+            switch (_torpedoGameInstance.GameState)
             {
-                if (_inAIMode && _torpedoGameInstance.CurrentPlayer == _aiPlayer)
-                {
-                    Debug.WriteLine("AI is placing ships");
-                    AI_place();
+                case EGameState.PlacingShips:
+                    if (_inAIMode && _torpedoGameInstance.ShipsToPlace(_aiPlayer).Any())
+                    {
+                        Debug.WriteLine("AI is placing ships");
+                        AI_place();
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"{_torpedoGameInstance.CurrentPlayer} is placing ships");
+                    }
                     UpdateUI();
-                }
-                else
-                {
-                    Debug.WriteLine($"{_torpedoGameInstance.CurrentPlayer} is placing ships");
+                    break;
+                case EGameState.SinkingShips:
+                    Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
+                    StartTimer();
+                    if (_torpedoGameInstance.CurrentPlayer == _aiPlayer)
+                    {
+                        AI_shoot();
+                    }
+                    break;
+                case EGameState.GameOver:
+                    FinishGame();
                     UpdateUI();
-                }
-            }
-            else if (_torpedoGameInstance.GameState == EGameState.SinkingShips)
-            {
-                Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
-                StartTimer();
-                if (_torpedoGameInstance.CurrentPlayer == _aiPlayer)
-                {
-                    AI_shoot();
-                }
-            }
-            if (_torpedoGameInstance.GameState == EGameState.GameOver)
-            {
-                FinishGame();
-                UpdateUI();
+                    break;
             }
         }
 
@@ -613,7 +592,7 @@ namespace NationalInstruments
             int player2Survive = 10 - (inStats[player1].Hits + inStats[player1].SunkenShips);
 
             outStats.Add(new PlayerStat(inStats[player1].Hits + inStats[player1].SunkenShips, inStats[player1].Misses, player1Survive) { Player = player1 });
-            outStats.Add(new PlayerStat(inStats[player2].Hits + inStats[player2].SunkenShips, inStats[player2].Misses, player2Survive) { Player=player2});
+            outStats.Add(new PlayerStat(inStats[player2].Hits + inStats[player2].SunkenShips, inStats[player2].Misses, player2Survive) { Player = player2 });
 
             return outStats;
         }
@@ -650,11 +629,21 @@ namespace NationalInstruments
             InitializeComponent();
             _dataStore = dataStore;
             _torpedoGameInstance = new TorpedoService(_dataStore, (9, 9));
-            _inAIMode = player2 == _dataStore.AIPlayer;
-            _aiPlayer = dataStore.AIPlayer;
             _humanPlayer = player1;
+            _aiPlayer = player2;
+            _inAIMode = _aiPlayer.Equals(_dataStore.AIPlayer);
+            _torpedoGameInstance.GameStateChanged += _torpedoGameInstance_GameStateChanged;
+            if (_inAIMode)
+            {
+                Debug.WriteLine("Game is in AI mode");
+            }
             InitializeGridPage(player1, player2);
             StartGame();
+        }
+
+        private void _torpedoGameInstance_GameStateChanged(object? sender, StateChangedEventArgs e)
+        {
+            Debug.WriteLine(e);
         }
     }
 }

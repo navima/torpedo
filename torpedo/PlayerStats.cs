@@ -2,21 +2,23 @@
 
 namespace NationalInstruments
 {
+    using System;
     using System.Collections.Generic;
 
-    internal class PlayerStats
+    public record PlayerStats
     {
-        public int SunkenShips { get; private set; }
-        public void IncrementSunkenShips() => SunkenShips++;
-        public int Hits { get; private set; }
-        public void IncrementHits() => Hits++;
-        public int Misses { get; private set; }
-        public void IncrementMisses() => Misses++;
+        public int SunkenShips { get; set; }
+        public int Hits { get; set; }
+        public int Misses { get; set; }
+        public Dictionary<Ship, EShipStatus> ShipStatuses { get; private set; } = new();
 
-        private readonly Dictionary<Ship, EShipStatus> _shipStatus = new();
-        public Dictionary<Ship, EShipStatus> GetShipStatuses() => _shipStatus;
-        public EShipStatus GetShipStatus(Ship ship) => _shipStatus[ship];
-        public void SetShipStatus(Ship ship, EShipStatus status) => _shipStatus[ship] = status;
+        internal void Deconstruct(out int sunkenShips, out int hits, out int misses, out Dictionary<Ship, EShipStatus> shipStatuses)
+        {
+            sunkenShips = SunkenShips;
+            hits = Hits;
+            misses = Misses;
+            shipStatuses = ShipStatuses;
+        }
     }
 
     public enum EShipStatus

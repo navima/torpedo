@@ -24,5 +24,17 @@ namespace NationalInstruments
         {
             return $"Player{{Name: {Name}}}";
         }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Player player &&
+                   Id == player.Id &&
+                   Name == player.Name;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }
