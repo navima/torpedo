@@ -556,6 +556,10 @@ namespace NationalInstruments
                 case EGameState.PlacingShips:
                     if (_inAIMode && _torpedoGameInstance.ShipsToPlace(_aiPlayer).Any())
                     {
+                        while(_torpedoGameInstance.CurrentPlayer != _aiPlayer)
+                        {
+                            _torpedoGameInstance.FinishPlacingShips(_torpedoGameInstance.CurrentPlayer);
+                        }
                         Debug.WriteLine("AI is placing ships");
                         AI_place();
                     }

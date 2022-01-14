@@ -142,7 +142,6 @@ namespace NationalInstruments
 #pragma warning restore CS8605 // Unboxing a possibly null value.
             }
         }
-        // TODO maybe make this parralel?
         public void FinishPlacingShips(Player player)
         {/*
             EnsureState(EGameState.PlacingShips);
@@ -150,7 +149,9 @@ namespace NationalInstruments
             {
                 throw new Exception("Bad player!");
             }
+            */
             var wraparound = IncrementPlayer();
+            /*
             if (wraparound)
             {
                 Rounds = 1;
