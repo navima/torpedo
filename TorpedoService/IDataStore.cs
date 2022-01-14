@@ -4,7 +4,6 @@
 
 #nullable enable
 #pragma warning disable SA1000 // Keywords should be spaced correctly
-#pragma warning disable SA1313
 
 using System.Collections.Generic;
 

@@ -12,8 +12,8 @@
 
 namespace NationalInstruments.Tests
 {
-    using System.Linq;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using System.Linq;
 
     [TestClass]
     public class TorpedoServiceTests

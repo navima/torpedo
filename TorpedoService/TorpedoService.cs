@@ -118,7 +118,7 @@ namespace NationalInstruments
             {
                 _unPlacedShips[player].Remove(ship);
                 PlacedShips(player).Add(position, ship);
-                if(_unPlacedShips.All(kvp => !kvp.Value.Any()))
+                if (_unPlacedShips.All(kvp => !kvp.Value.Any()))
                 {
                     _players.Shuffle();
                     Rounds = 1;
@@ -142,21 +142,9 @@ namespace NationalInstruments
 #pragma warning restore CS8605 // Unboxing a possibly null value.
             }
         }
-        public void FinishPlacingShips(Player player)
-        {/*
-            EnsureState(EGameState.PlacingShips);
-            if (CurrentPlayer != player)
-            {
-                throw new Exception("Bad player!");
-            }
-            */
-            var wraparound = IncrementPlayer();
-            /*
-            if (wraparound)
-            {
-                Rounds = 1;
-                GameState = EGameState.SinkingShips;
-            }*/
+        public void FinishPlacingShips()
+        {
+            IncrementPlayer();
         }
         public bool CanHit(Player player, Position position)
         {

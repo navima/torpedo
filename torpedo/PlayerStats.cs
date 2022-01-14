@@ -2,7 +2,6 @@
 
 namespace NationalInstruments
 {
-    using System;
     using System.Collections.Generic;
 
     public record PlayerStats
