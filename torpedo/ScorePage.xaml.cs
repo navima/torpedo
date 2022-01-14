@@ -34,8 +34,8 @@ namespace NationalInstruments
         {
             _outcome = outcome;
             // These could be expensive to get, so we cache them
-            _player1 = _outcome.Players.First();
-            _player2 = _outcome.Players.Skip(1).First();
+            _player1 = _outcome.Player1;
+            _player2 = _outcome.Player2;
         }
 
         public Player Player1 => _player1;

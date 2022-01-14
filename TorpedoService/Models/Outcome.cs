@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NationalInstruments
 {
@@ -17,9 +18,10 @@ namespace NationalInstruments
         {
         }
 
-        public Outcome(ICollection<Player> players, ICollection<PlayerStat> playerStats, Player winner, int numberOfRounds)
+        public Outcome(Player player1, Player player2, ICollection<Stat> playerStats, Player winner, int numberOfRounds)
         {
-            Players = players;
+            Player1 = player1;
+            Player2 = player2;
             PlayerStats = playerStats;
             Winner = winner;
             NumberOfRounds = numberOfRounds;
@@ -28,11 +30,14 @@ namespace NationalInstruments
         [Key]
         public int Id { get; set; }
         [Required]
-        public ICollection<Player> Players { get; set; }
+        public Player Player1 { get; set; }
         [Required]
-        public ICollection<PlayerStat> PlayerStats { get; set; }
+        public Player Player2 { get; set; }
+        [Required]
+        public ICollection<Stat> PlayerStats { get; set; }
         [Required]
         public Player Winner { get; set; }
+        public int WinnerId { get; set; }
         [Required]
         public int NumberOfRounds { get; set; }
     }

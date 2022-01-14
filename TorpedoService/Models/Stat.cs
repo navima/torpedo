@@ -11,17 +11,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NationalInstruments
 {
-    public class PlayerStat
+    public class Stat
     {
-        public PlayerStat()
+        public Stat()
         {
         }
 
-        public PlayerStat(int hits, int misses, int survivingShipParts)
+        public Stat(int hits, int misses, int survivingShipParts, Player player)
         {
             Hits = hits;
             Misses = misses;
             SurvivingShipParts = survivingShipParts;
+            Player = player;
         }
 
         [Key]

@@ -377,7 +377,7 @@ namespace NationalInstruments
             }
             else
             {
-                if(button is not null)
+                if (button is not null)
                 {
                     Debug.WriteLine("Positions are not adjecent, clearing selected button.");
                     _firstPosition.Background = _lightGray;
@@ -393,7 +393,7 @@ namespace NationalInstruments
                 orientation = EOrientation.Down;
                 return true;
             }
-            if(button is null)
+            if (button is null)
             {
                 orientation = default;
                 return false;
@@ -546,7 +546,7 @@ namespace NationalInstruments
             }
 
             Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
-            _dataStore.AddOutcome(new Outcome(_torpedoGameInstance.Players.ToArray(), ConvertStats(_playerStats), _winner, _torpedoGameInstance.Rounds));
+            _dataStore.AddOutcome(new Outcome(_torpedoGameInstance.Players.First(), _torpedoGameInstance.Players.Skip(1).First(), ConvertStats(_playerStats), _winner, _torpedoGameInstance.Rounds));
         }
 
         private void MoveState()
@@ -582,17 +582,17 @@ namespace NationalInstruments
 
         #endregion
 
-        private IList<PlayerStat> ConvertStats(Dictionary<Player, PlayerStats> inStats)
+        private IList<Stat> ConvertStats(Dictionary<Player, PlayerStats> inStats)
         {
-            List<PlayerStat> outStats = new();
+            List<Stat> outStats = new();
             Player player1 = inStats.Keys.ToArray()[0];
             Player player2 = inStats.Keys.ToArray()[1];
 
             int player1Survive = 10 - (inStats[player2].Hits + inStats[player2].SunkenShips);
             int player2Survive = 10 - (inStats[player1].Hits + inStats[player1].SunkenShips);
 
-            outStats.Add(new PlayerStat(inStats[player1].Hits + inStats[player1].SunkenShips, inStats[player1].Misses, player1Survive) { Player = player1 });
-            outStats.Add(new PlayerStat(inStats[player2].Hits + inStats[player2].SunkenShips, inStats[player2].Misses, player2Survive) { Player = player2 });
+            outStats.Add(new Stat(inStats[player1].Hits + inStats[player1].SunkenShips, inStats[player1].Misses, player1Survive, player1));
+            outStats.Add(new Stat(inStats[player2].Hits + inStats[player2].SunkenShips, inStats[player2].Misses, player2Survive, player2));
 
             return outStats;
         }

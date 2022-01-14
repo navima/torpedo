@@ -12,7 +12,7 @@ namespace NationalInstruments
         public MainWindow()
         {
             InitializeComponent();
-            _store = new InMemoryDataStore();
+            _store = new EFDataStore();
         }
 
         private void WindowKeyPressed(object sender, KeyEventArgs e)
