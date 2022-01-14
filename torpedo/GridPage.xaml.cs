@@ -541,12 +541,6 @@ namespace NationalInstruments
 
         public void FinishGame()
         {
-            if (_winner is null)
-            {
-                return;
-            }
-
-            Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
             Array.ForEach(_torpedoGameInstance.Players.ToArray(), x =>
             {
                 if (_torpedoGameInstance.IsPlayerDead(x))
@@ -564,6 +558,14 @@ namespace NationalInstruments
                     UpdatePlaying(_torpedoGameInstance.GetHitBoard(x));
                 }
             });
+            Debug.WriteLine("Finishing game");
+            if (_winner is null)
+            {
+                Debug.WriteLine("Winner is null");
+                return;
+            }
+
+            Debug.WriteLine($"Current state is {_torpedoGameInstance.GameState}, current player is {_torpedoGameInstance.CurrentPlayer}");
             _dataStore.AddOutcome(new Outcome(_torpedoGameInstance.Players, ConvertStats(_playerStats), _winner, _torpedoGameInstance.Rounds));
         }
 

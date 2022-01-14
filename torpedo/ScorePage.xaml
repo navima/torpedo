@@ -11,12 +11,12 @@
     <Grid>
         <DataGrid x:Name="Datagrid" HorizontalAlignment="Left" Height="420" VerticalAlignment="Top" Width="800" ItemsSource="{Binding}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Player 1" Width="1*" Binding="{Binding _score_player1}"/>
-                <DataGridTextColumn Header="Player 2" Width="1*" Binding="{Binding _score_player2}"/>
-                <DataGridTextColumn Header="Rounds" Width="1*" Binding="{Binding _score_rounds}"/>
-                <DataGridTextColumn Header="Player1 Hits" Width="1*" Binding="{Binding _score_p1Hits}"/>
-                <DataGridTextColumn Header="Player2 Hits" Width="1*" Binding="{Binding _score_p2Hits}"/>
-                <DataGridTextColumn Header="Winner" Width="1*" Binding="{Binding _score_winner}"/>
+                <DataGridTextColumn Header="Player 1" Width="1*" Binding="{Binding Player1Name}"/>
+                <DataGridTextColumn Header="Player 2" Width="1*" Binding="{Binding Player2Name}"/>
+                <DataGridTextColumn Header="Rounds" Width="1*" Binding="{Binding Rounds}"/>
+                <DataGridTextColumn Header="Player1 Hits" Width="1*" Binding="{Binding Player1Hits}"/>
+                <DataGridTextColumn Header="Player2 Hits" Width="1*" Binding="{Binding Player2Hits}"/>
+                <DataGridTextColumn Header="Winner" Width="1*" Binding="{Binding Winner}"/>
             </DataGrid.Columns>
         </DataGrid>
 
