@@ -35,10 +35,10 @@ namespace NationalInstruments.Tests
             var p2 = ts.Players.Skip(1).First();
             ts.TryPlaceShip(p1, ts.ShipsToPlace(p1).First(), new Position(4, 4));
             ts.TryPlaceShip(p1, ts.ShipsToPlace(p1).First(), new Position(0, 0));
-            ts.FinishPlacingShips(p1);
+            ts.FinishPlacingShips();
             ts.TryPlaceShip(p2, ts.ShipsToPlace(p2).First(), new Position(4, 4));
             ts.TryPlaceShip(p2, ts.ShipsToPlace(p2).First(), new Position(0, 0));
-            ts.FinishPlacingShips(p2);
+            ts.FinishPlacingShips();
 
             ts.TryHit(p1, new Position(4, 4), out _);
             ts.TryHit(p2, new Position(1, 0), out _);
